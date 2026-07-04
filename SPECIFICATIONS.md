@@ -3,6 +3,8 @@
 > Application mobile **Android + iOS** pour les clients de Mon-Repas.
 > Reprend **l'intégralité des fonctionnalités** de la webapp client (`../mon-repas_client`) et consomme **le même backend** (`../mon-repas_api`, NestJS, port 3502).
 > Architecture et conventions calquées sur **stepzy_mobile** (`/Users/cedric/Pro/Perso/gitlab/stepzy_mobile`).
+>
+> Ce document décrit **le produit cible** (le "quoi"). Le découpage et l'avancement du développement (le "quand") sont dans **[ROADMAP.md](./ROADMAP.md)**.
 
 ---
 
@@ -326,24 +328,7 @@ Base : `MONREPAS_API_URL` (défaut `http://localhost:3502`), JSON, Bearer token.
 
 ---
 
-## 13. Roadmap de développement
-
-| Phase | Contenu | Livrable |
-|---|---|---|
-| **0 — Fondations** | scaffold Flutter, thème light/dark + logo + icônes, ApiClient/ApiConfig, modèles + tests, go_router + splash | app qui compile, thème validé |
-| **1 — Auth** | login, register, secure storage, restauration session, garde rôles | connexion réelle API |
-| **2 — Menus & réservation** | semaine ISO, cartes jour, composition entrée/plat/dessert, créneaux, POST réservation | réservation de bout en bout |
-| **3 — Dashboard** | hero, calendrier hebdo, cartes colorées | accueil complet |
-| **4 — Édition/annulation** | bottom-sheet d'édition, PATCH partiel, annulation | parité gestion repas |
-| **5 — Mes commandes** | 3 onglets + segments + annulations | historique complet |
-| **6 — DoggyBag** | grille dispo, deadlines, panier, réservation | doggybag complet |
-| **7 — Événements** | liste, détail, créneaux, inscription, clôture | événements complets |
-| **8 — Temps réel & notifications** | Socket.IO, invalidations, cloche, préférences, rappels du jour | parité totale webapp |
-| **9 — Polish & stores** | icônes/splash définitifs, perfs, builds signés Android/iOS | candidats stores |
-
----
-
-## 14. Références
+## 13. Références
 
 - Webapp client (source de vérité fonctionnelle) : `../mon-repas_client`
 - API backend (contrat réel) : `../mon-repas_api` (Swagger : `http://localhost:3502/api`)
