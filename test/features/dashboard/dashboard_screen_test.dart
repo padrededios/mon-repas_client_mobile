@@ -121,31 +121,46 @@ void main() {
     expect(find.text('Bolognaise'), findsOneWidget);
     expect(find.text('Soirée Tacos'), findsOneWidget);
     expect(find.text('Lasagnes'), findsNothing);
-    expect(find.text('Mes repas & événements'), findsOneWidget);
+    // Les deux vues sont proposées en permanence par le sélecteur.
+    expect(find.text('Repas & événements'), findsOneWidget);
+    expect(find.text('DoggyBags'), findsOneWidget);
   });
 
-  testWidgets('le bouton DoggyBags bascule la vue, puis revient',
+  testWidgets('le sélecteur DoggyBags bascule la vue, puis revient',
       (tester) async {
     await tester.pumpWidget(buildApp());
     await tester.pumpAndSettle();
 
     // Bascule vers les doggybags.
-    await tester.tap(find.widgetWithText(FilterChip, 'DoggyBags'));
+    await tester.tap(find.text('DoggyBags'));
     await tester.pumpAndSettle();
 
     expect(find.text('Lasagnes'), findsOneWidget);
     expect(find.text('Quantité ×2'), findsOneWidget);
     expect(find.text('Bolognaise'), findsNothing);
     expect(find.text('Soirée Tacos'), findsNothing);
-    expect(find.text('Mes doggybags'), findsOneWidget);
 
-    // Re-clic : retour aux repas & événements.
-    await tester.tap(find.widgetWithText(FilterChip, 'DoggyBags'));
+    // Retour via le segment repas & événements.
+    await tester.tap(find.text('Repas & événements'));
     await tester.pumpAndSettle();
 
     expect(find.text('Bolognaise'), findsOneWidget);
     expect(find.text('Soirée Tacos'), findsOneWidget);
     expect(find.text('Lasagnes'), findsNothing);
+  });
+
+  testWidgets("le sélecteur tient sur un petit écran (pas d'overflow)",
+      (tester) async {
+    // iPhone SE 1re génération : 320 pt de large.
+    await tester.binding.setSurfaceSize(const Size(320, 568));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(buildApp());
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Repas & événements'), findsOneWidget);
+    expect(find.text('DoggyBags'), findsOneWidget);
   });
 
   testWidgets("l'accueil affiche la semaine, pas la date du jour",

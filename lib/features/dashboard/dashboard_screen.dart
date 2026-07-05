@@ -179,40 +179,48 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           const SizedBox(height: 8),
 
           // --- Bascule repas & événements / doggybags ---
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  showDoggyBags ? 'Mes doggybags' : 'Mes repas & événements',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: colors.mutedForeground,
-                  ),
-                ),
+          SegmentedButton<DashboardMode>(
+            segments: const [
+              ButtonSegment(
+                value: DashboardMode.mealsAndEvents,
+                icon: Icon(Icons.restaurant_menu, size: 18),
+                label: Text('Repas & événements'),
               ),
-              FilterChip(
-                selected: showDoggyBags,
-                showCheckmark: false,
-                avatar: Icon(
-                  Icons.inventory_2,
-                  size: 18,
-                  color: showDoggyBags
-                      ? AppColors.categoryDoggyBag
-                      : colors.mutedForeground,
-                ),
-                label: const Text('DoggyBags'),
-                selectedColor:
-                    AppColors.categoryDoggyBag.withValues(alpha: 0.18),
-                side: showDoggyBags
-                    ? const BorderSide(color: AppColors.categoryDoggyBag)
-                    : null,
-                onSelected: (_) => setState(() {
-                  _mode = showDoggyBags
-                      ? DashboardMode.mealsAndEvents
-                      : DashboardMode.doggyBags;
-                }),
+              ButtonSegment(
+                value: DashboardMode.doggyBags,
+                icon: Icon(Icons.inventory_2, size: 18),
+                label: Text('DoggyBags'),
               ),
             ],
+            selected: {_mode},
+            showSelectedIcon: false,
+            style: ButtonStyle(
+              // Le segment actif prend la couleur de sa catégorie.
+              backgroundColor: WidgetStateProperty.resolveWith((states) {
+                if (!states.contains(WidgetState.selected)) return null;
+                final accent = showDoggyBags
+                    ? AppColors.categoryDoggyBag
+                    : AppColors.categoryMeal;
+                return accent.withValues(alpha: 0.16);
+              }),
+              foregroundColor: WidgetStateProperty.resolveWith((states) {
+                if (!states.contains(WidgetState.selected)) {
+                  return colors.mutedForeground;
+                }
+                return showDoggyBags
+                    ? AppColors.categoryDoggyBag
+                    : AppColors.categoryMeal;
+              }),
+              textStyle: const WidgetStatePropertyAll(
+                TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              ),
+              padding: const WidgetStatePropertyAll(
+                EdgeInsets.symmetric(horizontal: 10),
+              ),
+              visualDensity: VisualDensity.compact,
+            ),
+            onSelectionChanged: (selection) =>
+                setState(() => _mode = selection.first),
           ),
           const SizedBox(height: 12),
 
