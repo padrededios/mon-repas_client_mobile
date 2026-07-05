@@ -43,6 +43,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Revenir sur l'onglet Accueil ramène toujours à la semaine en cours.
+    ref.listen<int>(homeTabIndexProvider, (previous, next) {
+      if (next == 0 && previous != 0) {
+        setState(() => _anchor = DateTime.now());
+      }
+    });
+
     final colors = context.appColors;
     final user = ref.watch(authProvider.select((s) => s.user));
     final reservations = ref.watch(myReservationsProvider);
@@ -90,31 +97,40 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         : 'Aucune réservation à venir — réservez votre prochain repas !',
                     style: TextStyle(color: colors.mutedForeground),
                   ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                  const SizedBox(height: 14),
+                  Row(
                     children: [
-                      _ShortcutChip(
-                        icon: Icons.calendar_month,
-                        label: 'Réserver',
-                        onTap: () => ref
-                            .read(homeTabIndexProvider.notifier)
-                            .state = 1,
+                      Expanded(
+                        child: _QuickLink(
+                          icon: Icons.restaurant_menu,
+                          label: 'Réserver',
+                          color: AppColors.categoryMeal,
+                          onTap: () => ref
+                              .read(homeTabIndexProvider.notifier)
+                              .state = 1,
+                        ),
                       ),
-                      _ShortcutChip(
-                        icon: Icons.inventory_2,
-                        label: 'DoggyBag',
-                        onTap: () => ref
-                            .read(homeTabIndexProvider.notifier)
-                            .state = 2,
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _QuickLink(
+                          icon: Icons.inventory_2,
+                          label: 'DoggyBag',
+                          color: AppColors.categoryDoggyBag,
+                          onTap: () => ref
+                              .read(homeTabIndexProvider.notifier)
+                              .state = 2,
+                        ),
                       ),
-                      _ShortcutChip(
-                        icon: Icons.auto_awesome,
-                        label: 'Événements',
-                        onTap: () => ref
-                            .read(homeTabIndexProvider.notifier)
-                            .state = 3,
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _QuickLink(
+                          icon: Icons.auto_awesome,
+                          label: 'Événements',
+                          color: AppColors.categoryEvent,
+                          onTap: () => ref
+                              .read(homeTabIndexProvider.notifier)
+                              .state = 3,
+                        ),
                       ),
                     ],
                   ),
@@ -151,10 +167,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 tooltip: 'Semaine précédente',
                 onPressed: () =>
                     setState(() => _anchor = addWeeks(_anchor, -1)),
-              ),
-              TextButton(
-                onPressed: () => setState(() => _anchor = DateTime.now()),
-                child: const Text('Cette semaine'),
               ),
               IconButton(
                 icon: const Icon(Icons.chevron_right),
@@ -260,23 +272,59 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 }
 
-class _ShortcutChip extends StatelessWidget {
-  const _ShortcutChip({
+/// Tuile de lien rapide : icône dans une pastille de la couleur de la
+/// catégorie (repas bleu / doggybag vert / événement violet), libellé dessous.
+class _QuickLink extends StatelessWidget {
+  const _QuickLink({
     required this.icon,
     required this.label,
+    required this.color,
     required this.onTap,
   });
 
   final IconData icon;
   final String label;
+  final Color color;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return ActionChip(
-      avatar: Icon(icon, size: 18, color: AppColors.brandOrange),
-      label: Text(label),
-      onPressed: onTap,
+    final colors = context.appColors;
+    return Material(
+      color: color.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.16),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 20, color: color),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: colors.foreground,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

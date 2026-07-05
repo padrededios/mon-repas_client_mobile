@@ -155,7 +155,32 @@ void main() {
 
     expect(find.text('Semaine ${isoWeekNumber(DateTime.now())}'),
         findsOneWidget);
-    expect(find.text('Cette semaine'), findsOneWidget);
+    // Pas de bouton texte : seules les flèches naviguent.
+    expect(find.text('Cette semaine'), findsNothing);
+    expect(find.text('Semaine actuelle'), findsNothing);
     expect(find.text('Bonjour Camille !'), findsOneWidget);
+  });
+
+  testWidgets("re-sélectionner l'onglet Accueil ramène à la semaine courante",
+      (tester) async {
+    await tester.pumpWidget(buildApp());
+    await tester.pumpAndSettle();
+
+    final now = DateTime.now();
+    await tester.tap(find.byIcon(Icons.chevron_right));
+    await tester.pumpAndSettle();
+    expect(find.text('Semaine ${isoWeekNumber(addWeeks(now, 1))}'),
+        findsOneWidget);
+
+    // On simule un passage sur un autre onglet puis le retour sur Accueil.
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(DashboardScreen)),
+    );
+    container.read(homeTabIndexProvider.notifier).state = 2;
+    await tester.pump();
+    container.read(homeTabIndexProvider.notifier).state = 0;
+    await tester.pumpAndSettle();
+
+    expect(find.text('Semaine ${isoWeekNumber(now)}'), findsOneWidget);
   });
 }
