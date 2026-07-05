@@ -4,14 +4,13 @@ import 'package:intl/intl.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/dates.dart';
-import '../../data/models/doggybag_reservation.dart';
-import '../../data/models/event_reservation.dart';
 import '../../data/models/reservation.dart';
 import '../../data/providers.dart';
 import 'edit_reservation_sheet.dart';
+import 'week_agenda.dart';
 
-/// Accueil : hero de bienvenue + calendrier hebdomadaire des commandes
-/// (repas bleu / doggybag vert / événement violet), navigation semaine.
+/// Accueil : vue hebdomadaire des commandes. Par défaut repas (bleu) et
+/// événements (violet) ; le bouton bascule affiche les doggybags (vert).
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
@@ -21,6 +20,7 @@ class DashboardScreen extends ConsumerStatefulWidget {
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   DateTime _anchor = DateTime.now();
+  DashboardMode _mode = DashboardMode.mealsAndEvents;
 
   Future<void> _refresh() async {
     ref.invalidate(myReservationsProvider);
@@ -43,6 +43,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Revenir sur l'onglet Accueil ramène toujours à la semaine en cours.
+    ref.listen<int>(homeTabIndexProvider, (previous, next) {
+      if (next == 0 && previous != 0) {
+        setState(() => _anchor = DateTime.now());
+      }
+    });
+
     final colors = context.appColors;
     final user = ref.watch(authProvider.select((s) => s.user));
     final reservations = ref.watch(myReservationsProvider);
@@ -51,20 +58,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final days = weekDays(_anchor);
     final today = DateTime.now();
 
-    final meals = (reservations.valueOrNull ?? [])
-        .where((r) => !r.isCancelled)
-        .toList();
-    final bags = (doggyBags.valueOrNull ?? [])
-        .where((r) => r.status == DoggyBagStatus.confirmed)
-        .toList();
-    final eventRes = (events.valueOrNull ?? [])
-        .where((r) => !r.isCancelled)
-        .toList();
+    final meals = reservations.valueOrNull ?? [];
+    final bags = doggyBags.valueOrNull ?? [];
+    final eventRes = events.valueOrNull ?? [];
 
     final upcomingCount = meals
         .where((r) =>
-            r.dailyMenu != null && !isDayPast(r.dailyMenu!.date))
+            !r.isCancelled &&
+            r.dailyMenu != null &&
+            !isDayPast(r.dailyMenu!.date))
         .length;
+
+    final showDoggyBags = _mode == DashboardMode.doggyBags;
 
     return RefreshIndicator(
       onRefresh: _refresh,
@@ -72,21 +77,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(16),
         children: [
-          // --- Hero ---
+          // --- Bienvenue + raccourcis ---
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    toBeginningOfSentenceCase(formatDayLong(today)),
-                    style: TextStyle(
-                      color: colors.mutedForeground,
-                      fontSize: 13,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
                   Text(
                     'Bonjour ${user?.firstName ?? ''} !',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -100,31 +97,40 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         : 'Aucune réservation à venir — réservez votre prochain repas !',
                     style: TextStyle(color: colors.mutedForeground),
                   ),
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                  const SizedBox(height: 14),
+                  Row(
                     children: [
-                      _ShortcutChip(
-                        icon: Icons.calendar_month,
-                        label: 'Réserver',
-                        onTap: () => ref
-                            .read(homeTabIndexProvider.notifier)
-                            .state = 1,
+                      Expanded(
+                        child: _QuickLink(
+                          icon: Icons.restaurant_menu,
+                          label: 'Réserver',
+                          color: AppColors.categoryMeal,
+                          onTap: () => ref
+                              .read(homeTabIndexProvider.notifier)
+                              .state = 1,
+                        ),
                       ),
-                      _ShortcutChip(
-                        icon: Icons.inventory_2,
-                        label: 'DoggyBag',
-                        onTap: () => ref
-                            .read(homeTabIndexProvider.notifier)
-                            .state = 2,
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _QuickLink(
+                          icon: Icons.inventory_2,
+                          label: 'DoggyBag',
+                          color: AppColors.categoryDoggyBag,
+                          onTap: () => ref
+                              .read(homeTabIndexProvider.notifier)
+                              .state = 2,
+                        ),
                       ),
-                      _ShortcutChip(
-                        icon: Icons.auto_awesome,
-                        label: 'Événements',
-                        onTap: () => ref
-                            .read(homeTabIndexProvider.notifier)
-                            .state = 3,
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _QuickLink(
+                          icon: Icons.auto_awesome,
+                          label: 'Événements',
+                          color: AppColors.categoryEvent,
+                          onTap: () => ref
+                              .read(homeTabIndexProvider.notifier)
+                              .state = 3,
+                        ),
                       ),
                     ],
                   ),
@@ -138,55 +144,101 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           Row(
             children: [
               Expanded(
-                child: Text(
-                  'Mes commandes de la semaine',
-                  style: Theme.of(context).textTheme.titleMedium,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Semaine ${isoWeekNumber(_anchor)}',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    Text(
+                      '${DateFormat('d MMM', 'fr_FR').format(days.first)} – '
+                      '${DateFormat('d MMM', 'fr_FR').format(days.last)}',
+                      style: TextStyle(
+                        color: colors.mutedForeground,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               IconButton(
                 icon: const Icon(Icons.chevron_left),
+                tooltip: 'Semaine précédente',
                 onPressed: () =>
                     setState(() => _anchor = addWeeks(_anchor, -1)),
               ),
-              TextButton(
-                onPressed: () => setState(() => _anchor = DateTime.now()),
-                child: const Text("Aujourd'hui"),
-              ),
               IconButton(
                 icon: const Icon(Icons.chevron_right),
+                tooltip: 'Semaine suivante',
                 onPressed: () =>
                     setState(() => _anchor = addWeeks(_anchor, 1)),
               ),
             ],
           ),
-          Text(
-            'Semaine ${isoWeekNumber(_anchor)} • '
-            '${DateFormat('d MMM', 'fr_FR').format(days.first)} – '
-            '${DateFormat('d MMM', 'fr_FR').format(days.last)}',
-            style: TextStyle(color: colors.mutedForeground, fontSize: 13),
+          const SizedBox(height: 8),
+
+          // --- Bascule repas & événements / doggybags ---
+          SegmentedButton<DashboardMode>(
+            segments: const [
+              ButtonSegment(
+                value: DashboardMode.mealsAndEvents,
+                icon: Icon(Icons.restaurant_menu, size: 18),
+                label: Text('Repas & événements'),
+              ),
+              ButtonSegment(
+                value: DashboardMode.doggyBags,
+                icon: Icon(Icons.inventory_2, size: 18),
+                label: Text('DoggyBags'),
+              ),
+            ],
+            selected: {_mode},
+            showSelectedIcon: false,
+            style: ButtonStyle(
+              // Le segment actif prend la couleur de sa catégorie.
+              backgroundColor: WidgetStateProperty.resolveWith((states) {
+                if (!states.contains(WidgetState.selected)) return null;
+                final accent = showDoggyBags
+                    ? AppColors.categoryDoggyBag
+                    : AppColors.categoryMeal;
+                return accent.withValues(alpha: 0.16);
+              }),
+              foregroundColor: WidgetStateProperty.resolveWith((states) {
+                if (!states.contains(WidgetState.selected)) {
+                  return colors.mutedForeground;
+                }
+                return showDoggyBags
+                    ? AppColors.categoryDoggyBag
+                    : AppColors.categoryMeal;
+              }),
+              textStyle: const WidgetStatePropertyAll(
+                TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              ),
+              padding: const WidgetStatePropertyAll(
+                EdgeInsets.symmetric(horizontal: 10),
+              ),
+              visualDensity: VisualDensity.compact,
+            ),
+            onSelectionChanged: (selection) =>
+                setState(() => _mode = selection.first),
           ),
           const SizedBox(height: 12),
 
           // --- Jours ---
           ...days.map((day) {
-            final dayMeals = meals
-                .where((r) =>
-                    r.dailyMenu != null && isSameDay(r.dailyMenu!.date, day))
-                .toList();
-            final dayBags =
-                bags.where((b) => isSameDay(b.pickupDate, day)).toList();
-            final dayEvents = eventRes
-                .where((e) =>
-                    e.specialEvent != null &&
-                    isSameDay(e.specialEvent!.eventDate, day))
-                .toList();
+            final agenda = agendaForDay(
+              day: day,
+              mode: _mode,
+              meals: meals,
+              doggyBags: bags,
+              events: eventRes,
+            );
             return _DaySection(
               day: day,
               isToday: isSameDay(day, today),
               isPast: isDayPast(day),
-              meals: dayMeals,
-              doggyBags: dayBags,
-              events: dayEvents,
+              mode: _mode,
+              agenda: agenda,
               onEditMeal: _openEdit,
             );
           }),
@@ -196,11 +248,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           Wrap(
             spacing: 16,
             runSpacing: 4,
-            children: const [
-              _LegendDot(color: AppColors.categoryMeal, label: 'Repas'),
-              _LegendDot(color: AppColors.categoryDoggyBag, label: 'DoggyBag'),
-              _LegendDot(color: AppColors.categoryEvent, label: 'Événement'),
-            ],
+            children: showDoggyBags
+                ? const [
+                    _LegendDot(
+                      color: AppColors.categoryDoggyBag,
+                      label: 'DoggyBag',
+                    ),
+                  ]
+                : const [
+                    _LegendDot(color: AppColors.categoryMeal, label: 'Repas'),
+                    _LegendDot(
+                      color: AppColors.categoryEvent,
+                      label: 'Événement',
+                    ),
+                  ],
           ),
           const SizedBox(height: 8),
           Align(
@@ -219,23 +280,59 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 }
 
-class _ShortcutChip extends StatelessWidget {
-  const _ShortcutChip({
+/// Tuile de lien rapide : icône dans une pastille de la couleur de la
+/// catégorie (repas bleu / doggybag vert / événement violet), libellé dessous.
+class _QuickLink extends StatelessWidget {
+  const _QuickLink({
     required this.icon,
     required this.label,
+    required this.color,
     required this.onTap,
   });
 
   final IconData icon;
   final String label;
+  final Color color;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return ActionChip(
-      avatar: Icon(icon, size: 18, color: AppColors.brandOrange),
-      label: Text(label),
-      onPressed: onTap,
+    final colors = context.appColors;
+    return Material(
+      color: color.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.16),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 20, color: color),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: colors.foreground,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -245,24 +342,21 @@ class _DaySection extends StatelessWidget {
     required this.day,
     required this.isToday,
     required this.isPast,
-    required this.meals,
-    required this.doggyBags,
-    required this.events,
+    required this.mode,
+    required this.agenda,
     required this.onEditMeal,
   });
 
   final DateTime day;
   final bool isToday;
   final bool isPast;
-  final List<Reservation> meals;
-  final List<DoggyBagReservation> doggyBags;
-  final List<EventReservation> events;
+  final DashboardMode mode;
+  final DayAgenda agenda;
   final void Function(Reservation) onEditMeal;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
-    final isEmpty = meals.isEmpty && doggyBags.isEmpty && events.isEmpty;
     final label = toBeginningOfSentenceCase(
       DateFormat('EEEE d MMMM', 'fr_FR').format(day),
     );
@@ -296,11 +390,13 @@ class _DaySection extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 6),
-            if (isEmpty)
+            if (agenda.isEmpty)
               Padding(
                 padding: const EdgeInsets.only(left: 14),
                 child: Text(
-                  'Rien de prévu',
+                  mode == DashboardMode.doggyBags
+                      ? 'Aucun doggybag'
+                      : 'Rien de prévu',
                   style: TextStyle(
                     color: colors.mutedForeground,
                     fontSize: 13,
@@ -308,7 +404,7 @@ class _DaySection extends StatelessWidget {
                 ),
               )
             else ...[
-              ...meals.map((r) => _MiniCard(
+              ...agenda.meals.map((r) => _MiniCard(
                     color: AppColors.categoryMeal,
                     icon: Icons.restaurant,
                     title: r.dish?.name ?? 'Repas',
@@ -321,19 +417,19 @@ class _DaySection extends StatelessWidget {
                     trailing: isPast ? null : Icons.edit_outlined,
                     onTap: isPast ? null : () => onEditMeal(r),
                   )),
-              ...doggyBags.map((b) => _MiniCard(
-                    color: AppColors.categoryDoggyBag,
-                    icon: Icons.inventory_2,
-                    title: b.dish?.name ?? 'DoggyBag',
-                    subtitle: 'Quantité ×${b.quantity}',
-                  )),
-              ...events.map((e) => _MiniCard(
+              ...agenda.events.map((e) => _MiniCard(
                     color: AppColors.categoryEvent,
                     icon: Icons.auto_awesome,
                     title: e.specialEvent?.name ?? 'Événement',
                     subtitle: e.eventTimeSlot != null
                         ? '${formatTimeHm(e.eventTimeSlot!.startTime)} – ${formatTimeHm(e.eventTimeSlot!.endTime)}'
                         : '',
+                  )),
+              ...agenda.doggyBags.map((b) => _MiniCard(
+                    color: AppColors.categoryDoggyBag,
+                    icon: Icons.inventory_2,
+                    title: b.dish?.name ?? 'DoggyBag',
+                    subtitle: 'Quantité ×${b.quantity}',
                   )),
             ],
           ],

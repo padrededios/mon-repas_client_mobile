@@ -46,6 +46,13 @@ class _MenusScreenState extends ConsumerState<MenusScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Revenir sur l'onglet Réserver ramène toujours à la semaine en cours.
+    ref.listen<int>(homeTabIndexProvider, (previous, next) {
+      if (next == 1 && previous != 1) {
+        setState(() => _anchor = DateTime.now());
+      }
+    });
+
     final colors = context.appColors;
     final menusAsync = ref.watch(weekMenusProvider(_weekKey));
     final days = weekDays(_anchor);
@@ -64,11 +71,11 @@ class _MenusScreenState extends ConsumerState<MenusScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Menus de la semaine',
+                      'Semaine ${_weekKey.week}',
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     Text(
-                      'Semaine ${_weekKey.week} • $rangeLabel',
+                      rangeLabel,
                       style: TextStyle(
                         color: colors.mutedForeground,
                         fontSize: 13,
@@ -82,10 +89,6 @@ class _MenusScreenState extends ConsumerState<MenusScreen> {
                 tooltip: 'Semaine précédente',
                 onPressed: () =>
                     setState(() => _anchor = addWeeks(_anchor, -1)),
-              ),
-              TextButton(
-                onPressed: () => setState(() => _anchor = DateTime.now()),
-                child: const Text('Semaine actuelle'),
               ),
               IconButton(
                 icon: const Icon(Icons.chevron_right),
