@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/api/api_client.dart';
+import '../core/realtime/socket_service.dart';
 import '../core/storage/session_storage.dart';
 import '../core/theme/theme_mode_notifier.dart';
 import '../features/auth/auth_notifier.dart';
 import '../features/doggybag/doggybag_cart.dart';
+import '../features/notifications/notifications_notifier.dart';
 import 'models/daily_menu.dart';
 import 'models/dish.dart';
 import 'models/doggybag_reservation.dart';
@@ -134,6 +136,19 @@ final doggyBagAvailableProvider =
 final doggyBagCartProvider = StateNotifierProvider<DoggyBagCartNotifier,
     List<DoggyBagCartItem>>((ref) {
   return DoggyBagCartNotifier();
+});
+
+// --- Temps réel & notifications ---------------------------------------------
+
+final socketServiceProvider = Provider<SocketService>((ref) {
+  final service = SocketService();
+  ref.onDispose(service.disconnect);
+  return service;
+});
+
+final notificationsProvider =
+    StateNotifierProvider<NotificationsNotifier, NotificationsState>((ref) {
+  return NotificationsNotifier();
 });
 
 // --- Navigation interne -----------------------------------------------------

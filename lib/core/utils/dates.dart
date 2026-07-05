@@ -100,3 +100,18 @@ String formatDayShort(DateTime date) =>
 /// « 10 juillet 2026 »
 String formatDateMedium(DateTime date) =>
     DateFormat('d MMMM yyyy', 'fr_FR').format(date);
+
+/// Horodatage relatif fr : « à l'instant », « il y a 5 min », « il y a 3 h »,
+/// « hier », sinon la date.
+String relativeTime(DateTime date, {DateTime? now}) {
+  final ref = now ?? DateTime.now();
+  final diff = ref.difference(date);
+  if (diff.inSeconds < 60) return "à l'instant";
+  if (diff.inMinutes < 60) return 'il y a ${diff.inMinutes} min';
+  if (diff.inHours < 24 && isSameDay(date, ref)) {
+    return 'il y a ${diff.inHours} h';
+  }
+  final yesterday = DateTime(ref.year, ref.month, ref.day - 1);
+  if (isSameDay(date, yesterday)) return 'hier';
+  return formatDateMedium(date);
+}
