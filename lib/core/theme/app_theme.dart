@@ -109,14 +109,31 @@ class AppTheme {
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(foregroundColor: c.foreground),
       ),
-      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+      navigationBarTheme: NavigationBarThemeData(
         backgroundColor: c.card,
-        selectedItemColor: AppColors.brandOrange,
-        unselectedItemColor: c.mutedForeground,
-        type: BottomNavigationBarType.fixed,
-        selectedLabelStyle:
-            const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-        unselectedLabelStyle: const TextStyle(fontSize: 12),
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        height: 64,
+        indicatorColor: AppColors.brandOrange.withValues(alpha: 0.14),
+        iconTheme: WidgetStateProperty.resolveWith(
+          (states) => IconThemeData(
+            size: 24,
+            color: states.contains(WidgetState.selected)
+                ? AppColors.brandOrange
+                : c.mutedForeground,
+          ),
+        ),
+        labelTextStyle: WidgetStateProperty.resolveWith(
+          (states) => TextStyle(
+            fontSize: 11,
+            fontWeight: states.contains(WidgetState.selected)
+                ? FontWeight.w600
+                : FontWeight.w400,
+            color: states.contains(WidgetState.selected)
+                ? AppColors.brandOrange
+                : c.mutedForeground,
+          ),
+        ),
       ),
       tabBarTheme: TabBarThemeData(
         labelColor: c.foreground,
