@@ -1,4 +1,5 @@
 import '../../core/utils/dates.dart';
+import 'event_dish.dart';
 import 'event_time_slot.dart';
 
 class SpecialEvent {
@@ -17,6 +18,7 @@ class SpecialEvent {
     this.dessert1,
     this.dessert2,
     this.timeSlots,
+    this.dishes = const [],
   });
 
   final int id;
@@ -30,6 +32,8 @@ class SpecialEvent {
 
   /// Dernier jour d'inscription (inclus : clôture en fin de journée).
   final DateTime? registrationDeadline;
+
+  /// Champs texte historiques (remplacés par [dishes]).
   final String? starter1;
   final String? starter2;
   final String? mainDish1;
@@ -38,6 +42,16 @@ class SpecialEvent {
   final String? dessert2;
   final List<EventTimeSlot>? timeSlots;
 
+  /// Plats proposés au choix, par service.
+  final List<EventDish> dishes;
+
+  List<EventDish> get starters =>
+      dishes.where((d) => d.type == EventDishType.starter).toList();
+  List<EventDish> get mainDishes =>
+      dishes.where((d) => d.type == EventDishType.mainDish).toList();
+  List<EventDish> get desserts =>
+      dishes.where((d) => d.type == EventDishType.dessert).toList();
+
   /// Les inscriptions ferment après la fin de journée (23:59:59) de la deadline.
   bool isRegistrationClosed({DateTime? now}) {
     final deadline = registrationDeadline;
@@ -45,6 +59,16 @@ class SpecialEvent {
     final ref = now ?? DateTime.now();
     final endOfDay =
         DateTime(deadline.year, deadline.month, deadline.day, 23, 59, 59);
+    return ref.isAfter(endOfDay);
+  }
+
+  /// Fenêtre de modification/annulation d'une réservation (parité API) :
+  /// fin de journée de la deadline si définie, sinon fin de journée de
+  /// l'événement.
+  bool isModificationWindowClosed({DateTime? now}) {
+    final limit = registrationDeadline ?? eventDate;
+    final ref = now ?? DateTime.now();
+    final endOfDay = DateTime(limit.year, limit.month, limit.day, 23, 59, 59);
     return ref.isAfter(endOfDay);
   }
 
@@ -67,6 +91,10 @@ class SpecialEvent {
       timeSlots: (json['timeSlots'] as List<dynamic>?)
           ?.map((s) => EventTimeSlot.fromJson(s as Map<String, dynamic>))
           .toList(),
+      dishes: (json['dishes'] as List<dynamic>?)
+              ?.map((d) => EventDish.fromJson(d as Map<String, dynamic>))
+              .toList() ??
+          const [],
     );
   }
 }

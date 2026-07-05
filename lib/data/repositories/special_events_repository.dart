@@ -32,11 +32,28 @@ class SpecialEventsRepository {
   Future<EventReservation> createReservation({
     required int specialEventId,
     required int eventTimeSlotId,
+    int? starterId,
+    int? mainDishId,
+    int? dessertId,
   }) async {
     final data = await _api.post('/event-reservations', data: {
       'specialEventId': specialEventId,
       'eventTimeSlotId': eventTimeSlotId,
+      'starterId': ?starterId,
+      'mainDishId': ?mainDishId,
+      'dessertId': ?dessertId,
     }) as Map<String, dynamic>;
+    return EventReservation.fromJson(data);
+  }
+
+  /// PATCH partiel : uniquement les champs modifiés (`eventTimeSlotId`,
+  /// `starterId`, `mainDishId`, `dessertId` ; null = retirer le choix).
+  Future<EventReservation> updateReservation(
+    int id,
+    Map<String, dynamic> changes,
+  ) async {
+    final data = await _api.patch('/event-reservations/$id', data: changes)
+        as Map<String, dynamic>;
     return EventReservation.fromJson(data);
   }
 

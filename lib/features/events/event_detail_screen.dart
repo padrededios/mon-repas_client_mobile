@@ -5,15 +5,16 @@ import 'package:intl/intl.dart' show toBeginningOfSentenceCase;
 import '../../core/api/api_exception.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/dates.dart';
-import '../../data/models/event_time_slot.dart';
 import '../../data/models/special_event.dart';
 import '../../data/providers.dart';
 import '../../shared/widgets/async_states.dart';
 import '../../shared/widgets/status_badge.dart';
 import '../../shared/widgets/time_slot_tile.dart';
+import 'event_dish_card.dart';
+import 'event_selection.dart';
 
-/// Détail d'un événement spécial : image, menu « X ou Y », créneaux,
-/// inscription (clôturée après la fin de journée de la deadline).
+/// Détail d'un événement spécial : image, choix du menu (entrée/plat/dessert),
+/// créneaux, inscription (clôturée après la fin de journée de la deadline).
 class EventDetailScreen extends ConsumerStatefulWidget {
   const EventDetailScreen({super.key, required this.eventId});
 
@@ -24,12 +25,11 @@ class EventDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
-  EventTimeSlot? _selectedSlot;
+  EventSelection _selection = const EventSelection();
   bool _isSubmitting = false;
 
   Future<void> _confirm(SpecialEvent event) async {
-    final slot = _selectedSlot;
-    if (slot == null) return;
+    if (!_selection.isCompleteFor(event)) return;
     // La clôture est re-vérifiée juste avant l'envoi (parité webapp).
     if (event.isRegistrationClosed()) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -38,7 +38,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
           backgroundColor: context.appColors.destructive,
         ),
       );
-      setState(() => _selectedSlot = null);
+      setState(() => _selection = const EventSelection());
       ref.invalidate(specialEventProvider(widget.eventId));
       return;
     }
@@ -46,7 +46,10 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
     try {
       await ref.read(specialEventsRepositoryProvider).createReservation(
             specialEventId: event.id,
-            eventTimeSlotId: slot.id,
+            eventTimeSlotId: _selection.timeSlot!.id,
+            starterId: _selection.starter?.id,
+            mainDishId: _selection.mainDish?.id,
+            dessertId: _selection.dessert?.id,
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -57,7 +60,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
       );
       ref.invalidate(myEventReservationsProvider);
       ref.invalidate(specialEventProvider(widget.eventId));
-      setState(() => _selectedSlot = null);
+      setState(() => _selection = const EventSelection());
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -172,7 +175,14 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                       Text(event.description),
                     ],
                     const SizedBox(height: 20),
-                    _MenuSection(event: event),
+                    if (event.dishes.isNotEmpty && canRegister)
+                      _MenuChoiceSection(
+                        event: event,
+                        selection: _selection,
+                        onChanged: (s) => setState(() => _selection = s),
+                      )
+                    else
+                      _MenuSection(event: event),
                     const SizedBox(height: 20),
                     if (closed && !past)
                       Card(
@@ -211,22 +221,35 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                               endTime: slot.endTime,
                               capacity: slot.capacity,
                               reservedCount: slot.reservedCount,
-                              selected: _selectedSlot?.id == slot.id,
+                              selected: _selection.timeSlot?.id == slot.id,
                               isPast: isTimeSlotPast(
                                 event.eventDate,
                                 slot.endTime,
                               ),
                               accentColor: AppColors.categoryEvent,
                               onTap: canRegister
-                                  ? () => setState(() => _selectedSlot =
-                                      _selectedSlot?.id == slot.id
-                                          ? null
-                                          : slot)
+                                  ? () => setState(() => _selection =
+                                      _selection.withTimeSlot(
+                                          _selection.timeSlot?.id == slot.id
+                                              ? null
+                                              : slot))
                                   : () {},
                             ),
                           )),
-                      if (canRegister && _selectedSlot != null) ...[
+                      if (canRegister && _selection.timeSlot != null) ...[
                         const SizedBox(height: 8),
+                        if (!_selection.isCompleteFor(event))
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Text(
+                              'Choisissez votre menu pour confirmer.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: colors.mutedForeground,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
@@ -234,8 +257,10 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
                               backgroundColor: AppColors.categoryEvent,
                               foregroundColor: Colors.white,
                             ),
-                            onPressed:
-                                _isSubmitting ? null : () => _confirm(event),
+                            onPressed: _isSubmitting ||
+                                    !_selection.isCompleteFor(event)
+                                ? null
+                                : () => _confirm(event),
                             child: _isSubmitting
                                 ? const SizedBox(
                                     width: 20,
@@ -274,6 +299,96 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
   }
 }
 
+/// Choix du menu : un plat à sélectionner par service proposé.
+class _MenuChoiceSection extends StatelessWidget {
+  const _MenuChoiceSection({
+    required this.event,
+    required this.selection,
+    required this.onChanged,
+  });
+
+  final SpecialEvent event;
+  final EventSelection selection;
+  final ValueChanged<EventSelection> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget section(String title, List<Widget> cards) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                title,
+                style: Theme.of(context)
+                    .textTheme
+                    .titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w700),
+              ),
+            ),
+            ...cards,
+            const SizedBox(height: 8),
+          ],
+        );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Composez votre menu',
+          style: Theme.of(context)
+              .textTheme
+              .titleSmall
+              ?.copyWith(fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 10),
+        if (event.starters.isNotEmpty)
+          section(
+            'Entrée',
+            event.starters
+                .map((d) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: EventDishOptionCard(
+                        dish: d,
+                        selected: selection.starter?.id == d.id,
+                        onTap: () => onChanged(selection.toggleStarter(d)),
+                      ),
+                    ))
+                .toList(),
+          ),
+        if (event.mainDishes.isNotEmpty)
+          section(
+            'Plat principal',
+            event.mainDishes
+                .map((d) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: EventDishOptionCard(
+                        dish: d,
+                        selected: selection.mainDish?.id == d.id,
+                        onTap: () => onChanged(selection.toggleMainDish(d)),
+                      ),
+                    ))
+                .toList(),
+          ),
+        if (event.desserts.isNotEmpty)
+          section(
+            'Dessert',
+            event.desserts
+                .map((d) => Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: EventDishOptionCard(
+                        dish: d,
+                        selected: selection.dessert?.id == d.id,
+                        onTap: () => onChanged(selection.toggleDessert(d)),
+                      ),
+                    ))
+                .toList(),
+          ),
+      ],
+    );
+  }
+}
+
 class _MenuSection extends StatelessWidget {
   const _MenuSection({required this.event});
 
@@ -288,9 +403,19 @@ class _MenuSection extends StatelessWidget {
       return a ?? b;
     }
 
-    final starter = pair(event.starter1, event.starter2);
-    final main = pair(event.mainDish1, event.mainDish2);
-    final dessert = pair(event.dessert1, event.dessert2);
+    String? joined(List<String> names) =>
+        names.isEmpty ? null : names.join(' ou ');
+
+    // Plats structurés en priorité ; champs texte historiques en secours.
+    final starter = event.dishes.isNotEmpty
+        ? joined(event.starters.map((d) => d.name).toList())
+        : pair(event.starter1, event.starter2);
+    final main = event.dishes.isNotEmpty
+        ? joined(event.mainDishes.map((d) => d.name).toList())
+        : pair(event.mainDish1, event.mainDish2);
+    final dessert = event.dishes.isNotEmpty
+        ? joined(event.desserts.map((d) => d.name).toList())
+        : pair(event.dessert1, event.dessert2);
     if (starter == null && main == null && dessert == null) {
       return const SizedBox.shrink();
     }
