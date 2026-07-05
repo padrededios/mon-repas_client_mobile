@@ -5,6 +5,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../data/providers.dart';
 import '../../shared/widgets/brand_logo.dart';
+import '../menus/menus_screen.dart';
 
 /// Coquille principale : AppBar commune + 5 onglets (transposition mobile
 /// de la navigation horizontale de la webapp).
@@ -114,7 +115,7 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         index: _index,
         children: const [
           _PlaceholderTab(title: 'Accueil'), // Dashboard : Phase 3
-          _PlaceholderTab(title: 'Réserver'), // Menus : Phase 2
+          MenusScreen(),
           _PlaceholderTab(title: 'DoggyBag'), // Phase 6
           _PlaceholderTab(title: 'Événements'), // Phase 7
           _PlaceholderTab(title: 'Commandes'), // Phase 5
