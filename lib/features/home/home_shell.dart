@@ -6,6 +6,8 @@ import '../../core/theme/app_typography.dart';
 import '../../data/providers.dart';
 import '../../shared/widgets/brand_logo.dart';
 import '../dashboard/dashboard_screen.dart';
+import '../doggybag/doggybag_screen.dart';
+import '../events/events_screen.dart';
 import '../menus/menus_screen.dart';
 import '../orders/orders_screen.dart';
 
@@ -117,8 +119,8 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         children: const [
           DashboardScreen(),
           MenusScreen(),
-          _PlaceholderTab(title: 'DoggyBag'), // Phase 6
-          _PlaceholderTab(title: 'Événements'), // Phase 7
+          DoggyBagScreen(),
+          EventsScreen(),
           OrdersScreen(),
         ],
       ),
@@ -171,31 +173,6 @@ class _HomeShellState extends ConsumerState<HomeShell> {
           Expanded(child: Text(label)),
           if (selected)
             const Icon(Icons.check, size: 18, color: AppColors.brandOrange),
-        ],
-      ),
-    );
-  }
-}
-
-class _PlaceholderTab extends StatelessWidget {
-  const _PlaceholderTab({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.appColors;
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.construction, size: 40, color: colors.mutedForeground),
-          const SizedBox(height: 12),
-          Text(title, style: Theme.of(context).textTheme.titleMedium),
-          Text(
-            'Bientôt disponible',
-            style: TextStyle(color: colors.mutedForeground),
-          ),
         ],
       ),
     );

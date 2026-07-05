@@ -5,6 +5,7 @@ import '../core/api/api_client.dart';
 import '../core/storage/session_storage.dart';
 import '../core/theme/theme_mode_notifier.dart';
 import '../features/auth/auth_notifier.dart';
+import '../features/doggybag/doggybag_cart.dart';
 import 'models/daily_menu.dart';
 import 'models/dish.dart';
 import 'models/doggybag_reservation.dart';
@@ -127,6 +128,12 @@ final specialEventProvider =
 final doggyBagAvailableProvider =
     FutureProvider.autoDispose.family<List<Dish>, DateTime>((ref, date) {
   return ref.watch(doggyBagRepositoryProvider).getAvailableDishes(date);
+});
+
+/// Panier doggybag (local à la session).
+final doggyBagCartProvider = StateNotifierProvider<DoggyBagCartNotifier,
+    List<DoggyBagCartItem>>((ref) {
+  return DoggyBagCartNotifier();
 });
 
 // --- Navigation interne -----------------------------------------------------

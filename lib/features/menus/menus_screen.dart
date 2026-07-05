@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/api/api_exception.dart';
@@ -10,6 +11,7 @@ import '../../data/models/daily_menu.dart';
 import '../../data/providers.dart';
 import '../../shared/widgets/async_states.dart';
 import '../../shared/widgets/status_badge.dart';
+import '../events/events_screen.dart';
 import 'meal_composition_sheet.dart';
 
 /// Onglet « Réserver » : menus de la semaine ISO, navigation ◀ / ▶,
@@ -113,27 +115,50 @@ class _MenusScreenState extends ConsumerState<MenusScreen> {
                 onRetry: () => ref.invalidate(weekMenusProvider(_weekKey)),
               );
             },
-            data: (menus) => RefreshIndicator(
-              onRefresh: () async =>
-                  ref.invalidate(weekMenusProvider(_weekKey)),
-              child: ListView.separated(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(16),
-                itemCount: days.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  final day = days[index];
-                  final menu = menus
-                      .where((m) => isSameDay(m.date, day))
-                      .firstOrNull;
-                  return _DayCard(
-                    day: day,
-                    menu: menu,
-                    onTap: menu != null ? () => _openComposition(menu) : null,
-                  );
+            data: (menus) {
+              // Un événement spécial à la même date prend le pas sur le menu.
+              final events =
+                  ref.watch(activeEventsProvider).valueOrNull ?? [];
+              final reservedEventIds =
+                  (ref.watch(myEventReservationsProvider).valueOrNull ?? [])
+                      .where((r) => !r.isCancelled)
+                      .map((r) => r.specialEventId)
+                      .toSet();
+              return RefreshIndicator(
+                onRefresh: () async {
+                  ref.invalidate(weekMenusProvider(_weekKey));
+                  ref.invalidate(activeEventsProvider);
                 },
-              ),
-            ),
+                child: ListView.separated(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(16),
+                  itemCount: days.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final day = days[index];
+                    final event = events
+                        .where((e) => isSameDay(e.eventDate, day))
+                        .firstOrNull;
+                    if (event != null) {
+                      return EventCard(
+                        event: event,
+                        isReserved: reservedEventIds.contains(event.id),
+                        onTap: () => context.push('/events/${event.id}'),
+                      );
+                    }
+                    final menu = menus
+                        .where((m) => isSameDay(m.date, day))
+                        .firstOrNull;
+                    return _DayCard(
+                      day: day,
+                      menu: menu,
+                      onTap:
+                          menu != null ? () => _openComposition(menu) : null,
+                    );
+                  },
+                ),
+              );
+            },
           ),
         ),
       ],

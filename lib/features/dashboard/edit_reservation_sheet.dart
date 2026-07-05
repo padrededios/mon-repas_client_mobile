@@ -326,7 +326,10 @@ class _EditSlotPicker extends ConsumerWidget {
             .map((slot) => Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: TimeSlotTile(
-                    slot: slot,
+                    startTime: slot.startTime,
+                    endTime: slot.endTime,
+                    capacity: slot.capacity,
+                    reservedCount: slot.reservedCount,
                     selected: draft.timeSlot?.id == slot.id,
                     isPast: isTimeSlotPast(menu.date, slot.endTime),
                     onTap: () => onChanged(draft.withTimeSlot(slot)),
