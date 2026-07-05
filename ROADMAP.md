@@ -10,7 +10,12 @@ Atteindre la **parité fonctionnelle complète** avec la webapp client (`../mon-
 ## État actuel
 
 - [x] Repo créé, spécifications rédigées, logos importés
-- [ ] Scaffold Flutter (Phase 0)
+- [x] **Phase 0 terminée** — scaffold, thème, socle API, modèles/règles métier testés
+- [x] **Phase 1 terminée** — authentification complète
+- [x] **Phase 2 terminée** — réservation de repas de bout en bout (jalon **M1**)
+- [ ] À valider sur iPhone : `./run_device.sh` (API locale démarrée)
+
+Suite : Phase 3 (Dashboard), puis 4-5 (jalon M2).
 
 ---
 
@@ -18,43 +23,44 @@ Atteindre la **parité fonctionnelle complète** avec la webapp client (`../mon-
 
 **Livrable : app qui compile sur Android + iOS, thème validé visuellement.**
 
-- [ ] `flutter create` (org `com.monrepas`, nom `mon_repas_client_mobile`), Material 3
-- [ ] Structure `lib/` : `core/ data/ features/ shared/ routing/` (spec §3)
-- [ ] Dépendances : flutter_riverpod, go_router, dio, socket_io_client, flutter_secure_storage, shared_preferences, intl, flutter_localizations, mocktail, flutter_lints
-- [ ] `core/theme/` : `AppColors` light + dark depuis les tokens de la spec §4, `AppTheme`, `AppTypography` (police Luckiest Guy embarquée pour le logo-texte)
-- [ ] `core/api/` : `ApiConfig` (`--dart-define=MONREPAS_API_URL`), `ApiClient` Dio + `ApiException`, `AuthInterceptor`
-- [ ] Modèles `data/models/` (spec §9) avec `fromJson` + tests unitaires
-- [ ] Helpers plats + dates (spec §9-§10) + tests unitaires (mêmes cas que la webapp)
-- [ ] `routing/app_router.dart` : `/splash`, `/login`, `/register`, `/` (HomeShell squelette)
-- [ ] Icône d'app générée depuis `assets/images/logo.png` (flutter_launcher_icons) + splash
-- [ ] Scripts `run_device.sh` / `start_simu.sh` (comme stepzy_mobile)
-- [ ] CI GitHub Actions : `flutter analyze` + `flutter test`
+- [x] `flutter create` (org `com.monrepas`, id `com.monrepas.client`, nom affiché « Mon Repas »), Material 3
+- [x] Structure `lib/` : `core/ data/ features/ shared/ routing/` (spec §3)
+- [x] Dépendances : flutter_riverpod, go_router, dio, socket_io_client, flutter_secure_storage, shared_preferences, intl, flutter_localizations, mocktail, flutter_lints
+- [x] `core/theme/` : `AppColors` light + dark depuis les tokens de la spec §4 (ThemeExtension), `AppTheme`, `AppTypography` (police Luckiest Guy embarquée pour le logo-texte)
+- [x] `core/api/` : `ApiConfig` (`--dart-define=MONREPAS_API_URL`), `ApiClient` Dio + `ApiException`, `AuthInterceptor`
+- [x] Modèles `data/models/` (spec §9) avec `fromJson` + tests unitaires
+- [x] Helpers plats + dates (spec §9-§10) + tests unitaires (mêmes cas que la webapp)
+- [x] `routing/app_router.dart` : `/splash`, `/login`, `/register`, `/` (HomeShell)
+- [x] Icône d'app générée depuis `assets/images/logo.png` (flutter_launcher_icons) — splash natif : Phase 9
+- [x] Script `run_device.sh` (iPhone via IP LAN) — pas de `start_simu.sh` : on ne teste pas sur simulateur (Mac trop juste), device réel uniquement
+- [x] CI GitHub Actions : `flutter analyze` + `flutter test`
 
 ## Phase 1 — Authentification
 
 **Livrable : connexion réelle contre l'API locale.**
 
-- [ ] `AuthRepository` : login / register / me / logout
-- [ ] `AuthNotifier` (StateNotifier) : état `{ user, isLoading, error, isInitialized }`, hydratation au démarrage (token en secure storage → `GET /auth/me`)
-- [ ] Écran **Login** : validation (email, mdp min 8), erreurs serveur en snackbar
-- [ ] Écran **Register** : prénom/nom min 2, confirmation mdp, message « En attente d'activation par un administrateur », retour login sans auto-login
-- [ ] Garde rôles : compte `isAdmin`/`isRestaurant` → écran « application réservée aux clients » + déconnexion
-- [ ] Redirects go_router pilotés par l'auth (splash → login → home)
-- [ ] Gestion 401 globale : logout + retour login
-- [ ] Tests : validation des formulaires, AuthNotifier (repo mocké)
+- [x] `AuthRepository` : login / register / me / logout
+- [x] `AuthNotifier` (StateNotifier) : état `{ user, isLoading, error, isInitialized }`, hydratation au démarrage (token en secure storage → `GET /auth/me`, mode dégradé hors-ligne)
+- [x] Écran **Login** : validation (email, mdp min 8), erreurs serveur en snackbar
+- [x] Écran **Register** : prénom/nom min 2, confirmation mdp, message « En attente d'activation par un administrateur », retour login sans auto-login
+- [x] Garde rôles : compte `isAdmin`/`isRestaurant` refusé au login avant toute persistance (« Cette application est réservée aux clients »)
+- [x] Redirects go_router pilotés par l'auth (splash → login → home)
+- [x] Gestion 401 globale : logout + retour login
+- [x] Tests : validation des formulaires, AuthNotifier, AuthRepository, écrans login/register (repo mocké)
 
 ## Phase 2 — Menus & réservation
 
 **Livrable : réserver un repas de bout en bout.**
 
-- [ ] `DailyMenusRepository` (`/daily-menus/week`, `/daily-menus/:id`) + `TimeSlotsRepository` + `ReservationsRepository` (POST)
-- [ ] Navigation semaine ISO ◀ / « Semaine actuelle » / ▶ (Lun→Ven)
-- [ ] Cartes jour : menu (aperçu entrées/plats/desserts, badge Passé via `isDayPast`/`areAllSlotsPast`) et événement (badges Passé/Clôturé/Réservé)
-- [ ] 404 semaine = « Menu pas encore disponible » (état normal, pas d'erreur)
-- [ ] Panneau de composition : sections Entrée/Plat/Dessert conditionnelles, badges Épuisé / « N restants » / « Spécial »
-- [ ] Sélecteur de créneaux : places, barre de progression, badges Passé/COMPLET/Bientôt complet/Disponible, refetch 30 s
-- [ ] Bouton « Confirmer la réservation » (sélection complète uniquement) → `POST /reservations` avec `dishMainType`
-- [ ] Tests widget : règles de complétude de sélection, plat épuisé non sélectionnable
+- [x] `DailyMenusRepository` (`/daily-menus/week`, `/daily-menus/:id`) + `TimeSlotsRepository` + `ReservationsRepository` (POST/PATCH/cancel)
+- [x] Navigation semaine ISO ◀ / « Semaine actuelle » / ▶ (Lun→Ven)
+- [x] Cartes jour menu : aperçu entrées/plats/desserts, badge Passé via `isDayPast`/`areAllSlotsPast`
+- [ ] Cartes jour **événement** dans la semaine (badges Passé/Clôturé/Réservé) → regroupé avec la Phase 7
+- [x] 404 semaine = « Menu pas encore disponible » (état normal, pas d'erreur)
+- [x] Panneau de composition : sections Entrée/Plat/Dessert conditionnelles, badges Épuisé / « N restants » / « Spécial »
+- [x] Sélecteur de créneaux : places, barre de progression, badges Passé/COMPLET/Bientôt complet/Disponible, refetch 30 s
+- [x] Bouton « Confirmer la réservation » (sélection complète uniquement) → `POST /reservations` avec `dishMainType`
+- [x] Tests widget : règles de complétude de sélection, plat épuisé non sélectionnable
 
 ## Phase 3 — Dashboard (Accueil)
 
