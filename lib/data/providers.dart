@@ -6,11 +6,17 @@ import '../core/storage/session_storage.dart';
 import '../core/theme/theme_mode_notifier.dart';
 import '../features/auth/auth_notifier.dart';
 import 'models/daily_menu.dart';
+import 'models/dish.dart';
+import 'models/doggybag_reservation.dart';
+import 'models/event_reservation.dart';
 import 'models/reservation.dart';
+import 'models/special_event.dart';
 import 'models/time_slot.dart';
 import 'repositories/auth_repository.dart';
 import 'repositories/daily_menus_repository.dart';
+import 'repositories/doggybag_repository.dart';
 import 'repositories/reservations_repository.dart';
+import 'repositories/special_events_repository.dart';
 import 'repositories/time_slots_repository.dart';
 
 /// Tous les providers Riverpod de l'app, centralisés (pattern stepzy_mobile).
@@ -85,3 +91,45 @@ final myReservationsProvider =
     FutureProvider.autoDispose<List<Reservation>>((ref) {
   return ref.watch(reservationsRepositoryProvider).getMine();
 });
+
+// --- DoggyBag & événements --------------------------------------------------
+
+final doggyBagRepositoryProvider = Provider<DoggyBagRepository>((ref) {
+  return DoggyBagRepository(ref.watch(apiClientProvider));
+});
+
+final specialEventsRepositoryProvider =
+    Provider<SpecialEventsRepository>((ref) {
+  return SpecialEventsRepository(ref.watch(apiClientProvider));
+});
+
+final myDoggyBagReservationsProvider =
+    FutureProvider.autoDispose<List<DoggyBagReservation>>((ref) {
+  return ref.watch(doggyBagRepositoryProvider).getMine();
+});
+
+final myEventReservationsProvider =
+    FutureProvider.autoDispose<List<EventReservation>>((ref) {
+  return ref.watch(specialEventsRepositoryProvider).getMyReservations();
+});
+
+final activeEventsProvider =
+    FutureProvider.autoDispose<List<SpecialEvent>>((ref) {
+  return ref.watch(specialEventsRepositoryProvider).getActive();
+});
+
+final specialEventProvider =
+    FutureProvider.autoDispose.family<SpecialEvent, int>((ref, id) {
+  return ref.watch(specialEventsRepositoryProvider).getById(id);
+});
+
+/// Plats doggybag disponibles pour un jour (clé = date à minuit).
+final doggyBagAvailableProvider =
+    FutureProvider.autoDispose.family<List<Dish>, DateTime>((ref, date) {
+  return ref.watch(doggyBagRepositoryProvider).getAvailableDishes(date);
+});
+
+// --- Navigation interne -----------------------------------------------------
+
+/// Onglet actif du HomeShell (piloté aussi par les raccourcis du dashboard).
+final homeTabIndexProvider = StateProvider<int>((ref) => 0);

@@ -5,7 +5,9 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
 import '../../data/providers.dart';
 import '../../shared/widgets/brand_logo.dart';
+import '../dashboard/dashboard_screen.dart';
 import '../menus/menus_screen.dart';
+import '../orders/orders_screen.dart';
 
 /// Coquille principale : AppBar commune + 5 onglets (transposition mobile
 /// de la navigation horizontale de la webapp).
@@ -17,13 +19,12 @@ class HomeShell extends ConsumerStatefulWidget {
 }
 
 class _HomeShellState extends ConsumerState<HomeShell> {
-  int _index = 0;
-
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
     final user = ref.watch(authProvider.select((s) => s.user));
     final themeMode = ref.watch(themeModeProvider);
+    final index = ref.watch(homeTabIndexProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -112,18 +113,18 @@ class _HomeShellState extends ConsumerState<HomeShell> {
         ],
       ),
       body: IndexedStack(
-        index: _index,
+        index: index,
         children: const [
-          _PlaceholderTab(title: 'Accueil'), // Dashboard : Phase 3
+          DashboardScreen(),
           MenusScreen(),
           _PlaceholderTab(title: 'DoggyBag'), // Phase 6
           _PlaceholderTab(title: 'Événements'), // Phase 7
-          _PlaceholderTab(title: 'Commandes'), // Phase 5
+          OrdersScreen(),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _index,
-        onTap: (i) => setState(() => _index = i),
+        currentIndex: index,
+        onTap: (i) => ref.read(homeTabIndexProvider.notifier).state = i,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home_outlined),
