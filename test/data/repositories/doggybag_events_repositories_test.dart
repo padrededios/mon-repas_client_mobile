@@ -135,6 +135,40 @@ void main() {
           data: {'specialEventId': 4, 'eventTimeSlotId': 200})).called(1);
     });
 
+    test('createReservation envoie les choix de plats quand fournis',
+        () async {
+      when(() => api.post('/event-reservations', data: any(named: 'data')))
+          .thenAnswer((_) async => eventReservationJson);
+
+      await SpecialEventsRepository(api).createReservation(
+        specialEventId: 4,
+        eventTimeSlotId: 200,
+        starterId: 1,
+        mainDishId: 2,
+        dessertId: 3,
+      );
+
+      verify(() => api.post('/event-reservations', data: {
+            'specialEventId': 4,
+            'eventTimeSlotId': 200,
+            'starterId': 1,
+            'mainDishId': 2,
+            'dessertId': 3,
+          })).called(1);
+    });
+
+    test('updateReservation envoie un PATCH partiel', () async {
+      when(() => api.patch('/event-reservations/12',
+              data: any(named: 'data')))
+          .thenAnswer((_) async => eventReservationJson);
+
+      await SpecialEventsRepository(api)
+          .updateReservation(12, {'mainDishId': 2, 'starterId': null});
+
+      verify(() => api.patch('/event-reservations/12',
+          data: {'mainDishId': 2, 'starterId': null})).called(1);
+    });
+
     test('cancelReservation', () async {
       when(() => api.patch('/event-reservations/12/cancel')).thenAnswer(
           (_) async => {...eventReservationJson, 'status': 'cancelled'});

@@ -11,6 +11,7 @@ import '../../data/providers.dart';
 import '../../shared/widgets/async_states.dart';
 import '../../shared/widgets/status_badge.dart';
 import '../dashboard/edit_reservation_sheet.dart';
+import 'edit_event_reservation_sheet.dart';
 
 /// Mes commandes : hero compteurs + 3 onglets Repas / DoggyBag / Événements,
 /// segments En cours / Passé(e)s / Annulés, édition et annulation.
@@ -555,6 +556,14 @@ class _EventsTabState extends ConsumerState<_EventsTab> {
     }
   }
 
+  Future<void> _edit(EventReservation e) async {
+    final changed = await EditEventReservationSheet.show(context, e);
+    if (changed == true) {
+      ref.invalidate(myEventReservationsProvider);
+      ref.invalidate(specialEventProvider(e.specialEventId));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
@@ -603,6 +612,15 @@ class _EventsTabState extends ConsumerState<_EventsTab> {
                       itemBuilder: (context, i) {
                         final e = items[i];
                         final date = dateOf(e);
+                        final choices = [
+                          if (e.starter != null) e.starter!.name,
+                          if (e.mainDish != null) e.mainDish!.name,
+                          if (e.dessert != null) e.dessert!.name,
+                        ].join(' • ');
+                        // Modifiable/annulable jusqu'à la deadline
+                        // d'inscription (sinon jusqu'au jour de l'événement).
+                        final windowOpen = e.specialEvent != null &&
+                            !e.specialEvent!.isModificationWindowClosed();
                         return Card(
                           child: ListTile(
                             leading: const Icon(
@@ -612,24 +630,44 @@ class _EventsTabState extends ConsumerState<_EventsTab> {
                             title: Text(e.specialEvent?.name ?? 'Événement'),
                             subtitle: Text(
                               [
-                                if (date != null) formatDateMedium(date),
-                                if (e.eventTimeSlot != null)
-                                  '${formatTimeHm(e.eventTimeSlot!.startTime)} – ${formatTimeHm(e.eventTimeSlot!.endTime)}',
-                              ].join(' • '),
+                                [
+                                  if (date != null) formatDateMedium(date),
+                                  if (e.eventTimeSlot != null)
+                                    '${formatTimeHm(e.eventTimeSlot!.startTime)} – ${formatTimeHm(e.eventTimeSlot!.endTime)}',
+                                ].join(' • '),
+                                if (choices.isNotEmpty) choices,
+                              ].join('\n'),
                               style: TextStyle(
                                 color: colors.mutedForeground,
                                 fontSize: 12,
                               ),
                             ),
                             trailing: switch (_segment) {
-                              _Segment.active => IconButton(
-                                  icon: Icon(
-                                    Icons.close,
-                                    size: 20,
-                                    color: colors.destructive,
-                                  ),
-                                  tooltip: 'Annuler',
-                                  onPressed: () => _cancel(e),
+                              _Segment.active when windowOpen => Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.edit_outlined,
+                                        size: 20,
+                                      ),
+                                      tooltip: 'Modifier',
+                                      onPressed: () => _edit(e),
+                                    ),
+                                    IconButton(
+                                      icon: Icon(
+                                        Icons.close,
+                                        size: 20,
+                                        color: colors.destructive,
+                                      ),
+                                      tooltip: 'Annuler',
+                                      onPressed: () => _cancel(e),
+                                    ),
+                                  ],
+                                ),
+                              _Segment.active => const StatusBadge(
+                                  'Clôturé',
+                                  variant: BadgeVariant.secondary,
                                 ),
                               _Segment.past => const StatusBadge(
                                   'Passé',
