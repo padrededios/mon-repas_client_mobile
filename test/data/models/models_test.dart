@@ -165,6 +165,26 @@ void main() {
       expect(slot(10, 8).isAlmostFull, isFalse);
       expect(slot(10, 10).isAlmostFull, isTrue);
     });
+
+    test(
+        'variante imbriquée de l\'API (daily-menus/week, reservations/me) : '
+        'maxCapacity / currentReservations', () {
+      // L'API sérialise les créneaux différemment selon l'endpoint :
+      // /time-slots/menu/:id → capacity/reservedCount ;
+      // imbriqué dans /daily-menus/* et /reservations/me →
+      // maxCapacity/currentReservations.
+      final s = TimeSlot.fromJson({
+        'id': 24,
+        'startTime': '13:30:00',
+        'endTime': '14:00:00',
+        'maxCapacity': 50,
+        'currentReservations': 12,
+        'dailyMenuId': 6,
+      });
+      expect(s.capacity, 50);
+      expect(s.reservedCount, 12);
+      expect(s.remainingSpots, 38);
+    });
   });
 
   group('Reservation', () {

@@ -6,6 +6,7 @@ import '../data/providers.dart';
 import '../features/auth/auth_notifier.dart';
 import '../features/auth/login_screen.dart';
 import '../features/auth/register_screen.dart';
+import '../features/events/event_detail_screen.dart';
 import '../features/home/home_shell.dart';
 import '../features/splash/splash_screen.dart';
 
@@ -48,6 +49,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/',
         builder: (context, state) => const HomeShell(),
+      ),
+      GoRoute(
+        path: '/events/:id',
+        builder: (context, state) => EventDetailScreen(
+          eventId: int.parse(state.pathParameters['id']!),
+        ),
       ),
     ],
   );

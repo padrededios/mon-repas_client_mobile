@@ -10,12 +10,12 @@ Atteindre la **parité fonctionnelle complète** avec la webapp client (`../mon-
 ## État actuel
 
 - [x] Repo créé, spécifications rédigées, logos importés
-- [x] **Phase 0 terminée** — scaffold, thème, socle API, modèles/règles métier testés
-- [x] **Phase 1 terminée** — authentification complète
-- [x] **Phase 2 terminée** — réservation de repas de bout en bout (jalon **M1**)
+- [x] **Phases 0 → 2 terminées** (jalon **M1**) — fondations, auth, réservation de repas
+- [x] **Phases 3 → 5 terminées** (jalon **M2**) — dashboard, édition/annulation, mes commandes
+- [x] **Phases 6 → 8 terminées** (jalon **M3**) — doggybag, événements, temps réel + notifications
 - [ ] À valider sur iPhone : `./run_device.sh` (API locale démarrée)
 
-Suite : Phase 3 (Dashboard), puis 4-5 (jalon M2).
+Suite : Phase 9 (polish + publication stores, jalon M4) après validation sur device.
 
 ---
 
@@ -55,7 +55,7 @@ Suite : Phase 3 (Dashboard), puis 4-5 (jalon M2).
 - [x] `DailyMenusRepository` (`/daily-menus/week`, `/daily-menus/:id`) + `TimeSlotsRepository` + `ReservationsRepository` (POST/PATCH/cancel)
 - [x] Navigation semaine ISO ◀ / « Semaine actuelle » / ▶ (Lun→Ven)
 - [x] Cartes jour menu : aperçu entrées/plats/desserts, badge Passé via `isDayPast`/`areAllSlotsPast`
-- [ ] Cartes jour **événement** dans la semaine (badges Passé/Clôturé/Réservé) → regroupé avec la Phase 7
+- [x] Cartes jour **événement** dans la semaine (badges Passé/Clôturé/Réservé) — livré avec la Phase 7
 - [x] 404 semaine = « Menu pas encore disponible » (état normal, pas d'erreur)
 - [x] Panneau de composition : sections Entrée/Plat/Dessert conditionnelles, badges Épuisé / « N restants » / « Spécial »
 - [x] Sélecteur de créneaux : places, barre de progression, badges Passé/COMPLET/Bientôt complet/Disponible, refetch 30 s
@@ -66,61 +66,61 @@ Suite : Phase 3 (Dashboard), puis 4-5 (jalon M2).
 
 **Livrable : accueil complet avec calendrier hebdomadaire.**
 
-- [ ] Hero : date du jour, « Bonjour {firstName} ! », compteur de réservations actives, raccourcis
-- [ ] Calendrier hebdo Lun→Ven (liste verticale mobile) : cartes repas (bleu), doggybag (vert), événement (violet), jour courant en valeur, jours passés grisés
-- [ ] Navigation ◀ / « Aujourd'hui » / ▶ + n° de semaine ISO
-- [ ] Légende + lien « Voir l'historique complet »
+- [x] Hero : date du jour, « Bonjour {firstName} ! », compteur de réservations actives, raccourcis
+- [x] Calendrier hebdo Lun→Ven (liste verticale mobile) : cartes repas (bleu), doggybag (vert), événement (violet), jour courant en valeur, jours passés grisés
+- [x] Navigation ◀ / « Aujourd'hui » / ▶ + n° de semaine ISO
+- [x] Légende + lien « Voir l'historique complet »
 
 ## Phase 4 — Édition / annulation de réservation
 
 **Livrable : parité de gestion des repas.**
 
-- [ ] Bottom-sheet d'édition (spec §7.6) : chargement `GET /daily-menus/:id`, resynchro état à l'ouverture
-- [ ] Plat réservé sélectionnable même épuisé ; « Enregistrer » désactivé sans changement
-- [ ] `PATCH /reservations/:id` partiel (champs modifiés uniquement) ; affichage des erreurs de fenêtre échue
-- [ ] Suppression avec confirmation → `PATCH /reservations/:id/cancel`
-- [ ] Ouverture depuis le Dashboard (carte repas tappable si `!isDayPast`)
-- [ ] Tests widget : hasChanges, plat courant épuisé sélectionnable
+- [x] Bottom-sheet d'édition (spec §7.6) : chargement `GET /daily-menus/:id`, resynchro état à l'ouverture
+- [x] Plat réservé sélectionnable même épuisé ; « Enregistrer » désactivé sans changement
+- [x] `PATCH /reservations/:id` partiel (champs modifiés uniquement) ; affichage des erreurs de fenêtre échue
+- [x] Suppression avec confirmation → `PATCH /reservations/:id/cancel`
+- [x] Ouverture depuis le Dashboard (carte repas tappable si `!isDayPast`)
+- [x] Tests widget : hasChanges, plat courant épuisé sélectionnable
 
 ## Phase 5 — Mes commandes
 
 **Livrable : historique complet.**
 
-- [ ] Hero compteurs (repas / doggybags / événements à venir)
-- [ ] Onglet **Repas** : segments En cours / Passées / Annulés ; carte plat+entrée+dessert+créneau ; boutons modifier (Phase 4) et annuler
-- [ ] Onglet **DoggyBag** : segments En cours / Récupérés / Annulés ; annulation
-- [ ] Onglet **Événements** : inscrits (annulables) / passés
-- [ ] Tris : actifs date croissante, passés/annulés date décroissante
+- [x] Hero compteurs (repas / doggybags / événements à venir)
+- [x] Onglet **Repas** : segments En cours / Passées / Annulés ; carte plat+entrée+dessert+créneau ; boutons modifier (Phase 4) et annuler
+- [x] Onglet **DoggyBag** : segments En cours / Récupérés / Annulés ; annulation
+- [x] Onglet **Événements** : inscrits (annulables) / passés
+- [x] Tris : actifs date croissante, passés/annulés date décroissante
 
 ## Phase 6 — DoggyBag
 
 **Livrable : réservation doggybag complète.**
 
-- [ ] `DoggyBagRepository` (`/doggybag/available`, `/doggybag-reservations`)
-- [ ] Grille hebdo bornée S0→S+2, requêtes par jour en parallèle, refetch 60 s
-- [ ] Deadlines « Avant HH:MM » (orange/rouge), verrouillage jours passés / délai dépassé
-- [ ] Panier (StateNotifier) : quantités min(5, dispo), groupement par date, retrait à 0
-- [ ] Confirmation : un POST par item en parallèle, snackbar, panier vidé
+- [x] `DoggyBagRepository` (`/doggybag/available`, `/doggybag-reservations`)
+- [x] Grille hebdo bornée S0→S+2, requêtes par jour en parallèle, refetch 60 s
+- [x] Deadlines « Avant HH:MM » (orange/rouge), verrouillage jours passés / délai dépassé
+- [x] Panier (StateNotifier) : quantités min(5, dispo), groupement par date, retrait à 0
+- [x] Confirmation : un POST par item en parallèle, snackbar, panier vidé
 
 ## Phase 7 — Événements
 
 **Livrable : inscription aux événements complète.**
 
-- [ ] `SpecialEventsRepository` (liste active, détail, event-reservations)
-- [ ] Liste : cartes avec image (placeholder sinon), deadline d'inscription, badge « Réservé »
-- [ ] Détail `/events/:id` : image, menu « X ou Y », créneaux avec capacités, confirmation violette
-- [ ] Clôture des inscriptions (fin de journée de `registrationDeadline`), re-vérifiée avant envoi
+- [x] `SpecialEventsRepository` (liste active, détail, event-reservations)
+- [x] Liste : cartes avec image (placeholder sinon), deadline d'inscription, badge « Réservé »
+- [x] Détail `/events/:id` : image, menu « X ou Y », créneaux avec capacités, confirmation violette
+- [x] Clôture des inscriptions (fin de journée de `registrationDeadline`), re-vérifiée avant envoi
 
 ## Phase 8 — Temps réel & notifications
 
 **Livrable : parité totale avec la webapp.**
 
-- [ ] `SocketService` : Socket.IO `/events` avec `auth.token`, reconnexion auto, pause/resume au lifecycle
-- [ ] Mapping événements → `ref.invalidate(...)` (tableau spec §8) ; maj en direct des stocks doggybag et capacités de créneaux
-- [ ] Cloche + panneau notifications : badge non-lues, tout lire / tout supprimer, max 50, persistance locale
-- [ ] Préférences par type (4 interrupteurs) persistées
-- [ ] Rappels au démarrage (repas/doggybags du jour, déduplication quotidienne)
-- [ ] Toast `event:registration-reminder`
+- [x] `SocketService` : Socket.IO `/events` avec `auth.token`, reconnexion auto, pause/resume au lifecycle
+- [x] Mapping événements → `ref.invalidate(...)` (tableau spec §8) ; maj en direct des stocks doggybag et capacités de créneaux
+- [x] Cloche + panneau notifications : badge non-lues, tout lire / tout supprimer, max 50, persistance locale
+- [x] Préférences par type (4 interrupteurs) persistées
+- [x] Rappels au démarrage (repas/doggybags du jour, déduplication quotidienne)
+- [x] Toast `event:registration-reminder`
 
 ## Phase 9 — Polish & publication stores
 

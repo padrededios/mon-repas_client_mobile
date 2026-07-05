@@ -15,6 +15,7 @@ void main() async {
   // Restauration en arrière-plan : le splash attend isInitialized via le
   // redirect du router, sans bloquer le démarrage sur le réseau.
   container.read(themeModeProvider.notifier).hydrate();
+  container.read(notificationsProvider.notifier).hydrate();
   container.read(authProvider.notifier).hydrate();
 
   runApp(

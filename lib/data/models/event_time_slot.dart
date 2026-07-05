@@ -22,13 +22,17 @@ class EventTimeSlot with SlotCapacity {
   final int reservedCount;
 
   factory EventTimeSlot.fromJson(Map<String, dynamic> json) {
+    // Tolère les deux variantes de sérialisation de l'API (voir TimeSlot).
     return EventTimeSlot(
       id: (json['id'] as num).toInt(),
-      specialEventId: (json['specialEventId'] as num).toInt(),
+      specialEventId: (json['specialEventId'] as num?)?.toInt() ?? 0,
       startTime: json['startTime'] as String,
       endTime: json['endTime'] as String,
-      capacity: (json['capacity'] as num).toInt(),
-      reservedCount: (json['reservedCount'] as num?)?.toInt() ?? 0,
+      capacity: ((json['capacity'] ?? json['maxCapacity']) as num).toInt(),
+      reservedCount:
+          ((json['reservedCount'] ?? json['currentReservations']) as num?)
+                  ?.toInt() ??
+              0,
     );
   }
 }
