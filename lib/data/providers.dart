@@ -49,6 +49,10 @@ final StateNotifierProvider<AuthNotifier, AuthState> authProvider =
   return AuthNotifier(ref.watch(authRepositoryProvider));
 });
 
+/// Vrai quand l'animation d'intro du splash est terminée : le router ne
+/// quitte pas /splash avant, même si la session est déjà restaurée.
+final splashCompletedProvider = StateProvider<bool>((ref) => false);
+
 
 // --- Menus & réservations -------------------------------------------------
 

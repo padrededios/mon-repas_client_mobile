@@ -12,9 +12,10 @@ import '../features/profile/profile_screen.dart';
 import '../features/splash/splash_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
-  // Chaque changement d'état d'auth relance le redirect.
+  // Chaque changement d'état d'auth ou de fin de splash relance le redirect.
   final refresh = ValueNotifier(0);
   ref.listen<AuthState>(authProvider, (_, _) => refresh.value++);
+  ref.listen<bool>(splashCompletedProvider, (_, _) => refresh.value++);
   ref.onDispose(refresh.dispose);
 
   return GoRouter(
@@ -27,6 +28,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       if (!auth.isInitialized) {
         return location == '/splash' ? null : '/splash';
+      }
+      // Session prête mais intro du splash en cours : on la laisse finir.
+      if (location == '/splash' && !ref.read(splashCompletedProvider)) {
+        return null;
       }
       if (!auth.isAuthenticated) {
         return onAuthPage ? null : '/login';
