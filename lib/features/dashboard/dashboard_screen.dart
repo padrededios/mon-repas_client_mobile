@@ -6,6 +6,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/utils/dates.dart';
 import '../../data/models/reservation.dart';
 import '../../data/providers.dart';
+import '../../shared/widgets/week_nav_header.dart';
 import 'edit_reservation_sheet.dart';
 import 'week_agenda.dart';
 
@@ -141,40 +142,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           const SizedBox(height: 20),
 
           // --- Navigation semaine ---
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Semaine ${isoWeekNumber(_anchor)}',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    Text(
-                      '${DateFormat('d MMM', 'fr_FR').format(days.first)} – '
-                      '${DateFormat('d MMM', 'fr_FR').format(days.last)}',
-                      style: TextStyle(
-                        color: colors.mutedForeground,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.chevron_left),
-                tooltip: 'Semaine précédente',
-                onPressed: () =>
-                    setState(() => _anchor = addWeeks(_anchor, -1)),
-              ),
-              IconButton(
-                icon: const Icon(Icons.chevron_right),
-                tooltip: 'Semaine suivante',
-                onPressed: () =>
-                    setState(() => _anchor = addWeeks(_anchor, 1)),
-              ),
-            ],
+          WeekNavHeader(
+            anchor: _anchor,
+            onPrevious: () => setState(() => _anchor = addWeeks(_anchor, -1)),
+            onNext: () => setState(() => _anchor = addWeeks(_anchor, 1)),
           ),
           const SizedBox(height: 8),
 
