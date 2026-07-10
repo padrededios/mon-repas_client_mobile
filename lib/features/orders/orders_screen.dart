@@ -71,6 +71,11 @@ class OrdersScreen extends ConsumerWidget {
             ),
           ),
           TabBar(
+            // Largeur naturelle + groupe centré : les libellés longs
+            // (« Événements (12) ») ne sont plus tronqués au bord.
+            isScrollable: true,
+            tabAlignment: TabAlignment.center,
+            labelPadding: const EdgeInsets.symmetric(horizontal: 12),
             tabs: [
               Tab(text: 'Repas (${(meals.valueOrNull ?? []).length})'),
               Tab(text: 'DoggyBag (${(bags.valueOrNull ?? []).length})'),

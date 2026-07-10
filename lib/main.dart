@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'core/theme/app_theme.dart';
-import 'core/theme/theme_choice_notifier.dart';
 import 'data/providers.dart';
 import 'routing/app_router.dart';
 
@@ -15,7 +14,6 @@ void main() async {
   final container = ProviderContainer();
   // Restauration en arrière-plan : le splash attend isInitialized via le
   // redirect du router, sans bloquer le démarrage sur le réseau.
-  container.read(themeChoiceProvider.notifier).hydrate();
   container.read(notificationsProvider.notifier).hydrate();
   container.read(authProvider.notifier).hydrate();
 
@@ -33,14 +31,11 @@ class MonRepasApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
-    final choice = ref.watch(themeChoiceProvider);
-    final isComic = choice == AppThemeChoice.comic;
     return MaterialApp.router(
       title: 'Mon Repas',
       debugShowCheckedModeBanner: false,
-      theme: isComic ? AppTheme.comic : AppTheme.light,
-      darkTheme: isComic ? AppTheme.comic : AppTheme.dark,
-      themeMode: choice.themeMode,
+      // Thème unique : le clair est le seul validé visuellement.
+      theme: AppTheme.light,
       routerConfig: router,
       locale: const Locale('fr'),
       supportedLocales: const [Locale('fr')],

@@ -5,7 +5,6 @@ import 'package:mon_repas_client_mobile/core/api/api_client.dart';
 import 'package:mon_repas_client_mobile/core/api/api_exception.dart';
 import 'package:mon_repas_client_mobile/core/storage/session_storage.dart';
 import 'package:mon_repas_client_mobile/core/theme/app_theme.dart';
-import 'package:mon_repas_client_mobile/core/theme/theme_choice_notifier.dart';
 import 'package:mon_repas_client_mobile/data/models/user.dart';
 import 'package:mon_repas_client_mobile/data/providers.dart';
 import 'package:mon_repas_client_mobile/data/repositories/auth_repository.dart';
@@ -89,26 +88,9 @@ void main() {
     expect(find.text('Notifications push'), findsOneWidget);
     expect(find.text('Notifications mail'), findsOneWidget);
     expect(find.text('Bientôt disponible'), findsOneWidget);
-    expect(find.text("Thème de l'application"), findsOneWidget);
     expect(find.text('Se déconnecter'), findsOneWidget);
-  });
-
-  testWidgets('propose les 4 thèmes dont le thème BD', (tester) async {
-    await pumpProfile(tester);
-
-    expect(find.text('Thème clair'), findsOneWidget);
-    expect(find.text('Thème sombre'), findsOneWidget);
-    expect(find.text('Thème BD'), findsOneWidget);
-    expect(find.text('Thème système'), findsOneWidget);
-
-    final container = ProviderScope.containerOf(
-      tester.element(find.byType(ProfileScreen)),
-    );
-    expect(container.read(themeChoiceProvider), AppThemeChoice.system);
-
-    await tester.tap(find.text('Thème BD'));
-    await tester.pumpAndSettle();
-    expect(container.read(themeChoiceProvider), AppThemeChoice.comic);
+    // Thème unique (clair) : plus de sélecteur de thème.
+    expect(find.text("Thème de l'application"), findsNothing);
   });
 
   testWidgets('les toggles mail sont désactivés (bientôt disponible)',

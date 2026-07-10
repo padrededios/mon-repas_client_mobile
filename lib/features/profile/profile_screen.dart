@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/theme_choice_notifier.dart';
 import '../../data/models/notification_item.dart';
 import '../../data/models/notification_preferences.dart';
 import '../../data/providers.dart';
@@ -32,7 +31,6 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.appColors;
     final user = ref.watch(authProvider.select((s) => s.user));
-    final themeChoice = ref.watch(themeChoiceProvider);
     final preferences = ref.watch(
       notificationsProvider.select((s) => s.preferences),
     );
@@ -180,47 +178,6 @@ class ProfileScreen extends ConsumerWidget {
               ],
             ),
           ),
-          const SizedBox(height: 20),
-
-          // --- Thème ---
-          const _SectionTitle('Thème de l\'application'),
-          Card(
-            child: RadioGroup<AppThemeChoice>(
-              groupValue: themeChoice,
-              onChanged: (choice) {
-                if (choice != null) {
-                  ref.read(themeChoiceProvider.notifier).setChoice(choice);
-                }
-              },
-              child: Column(
-                children: [
-                  for (final (index, option) in _themeOptions.indexed) ...[
-                    if (index > 0) const Divider(),
-                    RadioListTile<AppThemeChoice>(
-                      value: option.choice,
-                      title: Row(
-                        children: [
-                          Icon(option.icon, size: 20),
-                          const SizedBox(width: 10),
-                          Text(option.label),
-                        ],
-                      ),
-                      subtitle: option.subtitle != null
-                          ? Padding(
-                              padding: const EdgeInsets.only(left: 30),
-                              child: Text(
-                                option.subtitle!,
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                            )
-                          : null,
-                      activeColor: AppColors.brandOrange,
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ),
           const SizedBox(height: 24),
 
           // --- Déconnexion ---
@@ -241,31 +198,6 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 }
-
-class _ThemeOption {
-  const _ThemeOption(this.choice, this.label, this.icon, [this.subtitle]);
-
-  final AppThemeChoice choice;
-  final String label;
-  final IconData icon;
-  final String? subtitle;
-}
-
-const _themeOptions = [
-  _ThemeOption(AppThemeChoice.light, 'Thème clair', Icons.light_mode_outlined),
-  _ThemeOption(AppThemeChoice.dark, 'Thème sombre', Icons.dark_mode_outlined),
-  _ThemeOption(
-    AppThemeChoice.comic,
-    'Thème BD',
-    Icons.auto_stories_outlined,
-    'Papier crème, contours noirs, couleurs pop',
-  ),
-  _ThemeOption(
-    AppThemeChoice.system,
-    'Thème système',
-    Icons.brightness_auto_outlined,
-  ),
-];
 
 class _SectionTitle extends StatelessWidget {
   const _SectionTitle(this.label);

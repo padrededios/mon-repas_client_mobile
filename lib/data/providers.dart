@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/api/api_client.dart';
 import '../core/realtime/socket_service.dart';
 import '../core/storage/session_storage.dart';
-import '../core/theme/theme_choice_notifier.dart';
 import '../features/auth/auth_notifier.dart';
 import '../features/doggybag/doggybag_cart.dart';
 import '../features/notifications/notifications_notifier.dart';
@@ -50,10 +49,6 @@ final StateNotifierProvider<AuthNotifier, AuthState> authProvider =
   return AuthNotifier(ref.watch(authRepositoryProvider));
 });
 
-final themeChoiceProvider =
-    StateNotifierProvider<ThemeChoiceNotifier, AppThemeChoice>((ref) {
-  return ThemeChoiceNotifier();
-});
 
 // --- Menus & réservations -------------------------------------------------
 
