@@ -14,7 +14,6 @@ void main() async {
   final container = ProviderContainer();
   // Restauration en arrière-plan : le splash attend isInitialized via le
   // redirect du router, sans bloquer le démarrage sur le réseau.
-  container.read(themeModeProvider.notifier).hydrate();
   container.read(notificationsProvider.notifier).hydrate();
   container.read(authProvider.notifier).hydrate();
 
@@ -32,13 +31,11 @@ class MonRepasApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
-    final themeMode = ref.watch(themeModeProvider);
     return MaterialApp.router(
       title: 'Mon Repas',
       debugShowCheckedModeBanner: false,
+      // Thème unique : le clair est le seul validé visuellement.
       theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
-      themeMode: themeMode,
       routerConfig: router,
       locale: const Locale('fr'),
       supportedLocales: const [Locale('fr')],

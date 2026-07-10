@@ -16,8 +16,10 @@ class WeekNavHeader extends StatelessWidget {
 
   /// Jour quelconque de la semaine affichée.
   final DateTime anchor;
-  final VoidCallback onPrevious;
-  final VoidCallback onNext;
+
+  /// null = flèche désactivée (borne atteinte).
+  final VoidCallback? onPrevious;
+  final VoidCallback? onNext;
 
   @override
   Widget build(BuildContext context) {

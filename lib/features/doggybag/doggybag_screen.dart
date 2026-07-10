@@ -10,6 +10,7 @@ import '../../core/utils/dates.dart';
 import '../../data/models/dish.dart';
 import '../../data/providers.dart';
 import '../../shared/widgets/status_badge.dart';
+import '../../shared/widgets/week_nav_header.dart';
 import 'doggybag_cart.dart';
 
 /// Onglet DoggyBag : plats à emporter par jour (semaine courante → S+2),
@@ -89,50 +90,21 @@ class _DoggyBagScreenState extends ConsumerState<DoggyBagScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.appColors;
     final days = _days;
     final cart = ref.watch(doggyBagCartProvider);
-    final rangeLabel =
-        '${DateFormat('d MMM', 'fr_FR').format(days.first)} – '
-        '${DateFormat('d MMM', 'fr_FR').format(days.last)}';
 
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'DoggyBag',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    Text(
-                      'Semaine ${isoWeekNumber(days.first)} • $rangeLabel',
-                      style: TextStyle(
-                        color: colors.mutedForeground,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.chevron_left),
-                onPressed: _weekOffset > 0
-                    ? () => setState(() => _weekOffset--)
-                    : null,
-              ),
-              IconButton(
-                icon: const Icon(Icons.chevron_right),
-                onPressed: _weekOffset < 2
-                    ? () => setState(() => _weekOffset++)
-                    : null,
-              ),
-            ],
+          padding: const EdgeInsets.fromLTRB(8, 12, 8, 4),
+          child: WeekNavHeader(
+            anchor: days.first,
+            onPrevious: _weekOffset > 0
+                ? () => setState(() => _weekOffset--)
+                : null,
+            onNext: _weekOffset < 2
+                ? () => setState(() => _weekOffset++)
+                : null,
           ),
         ),
         Expanded(
