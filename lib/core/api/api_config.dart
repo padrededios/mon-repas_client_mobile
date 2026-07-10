@@ -13,4 +13,11 @@ class ApiConfig {
   static const String wsUrl = '$baseUrl/events';
 
   static const int timeoutMs = 10000;
+
+  /// Résout une URL de média renvoyée par l'API : les chemins relatifs
+  /// (`/uploads/...`) sont préfixés par [baseUrl], les URLs absolues
+  /// (images externes) passent telles quelles.
+  static String resolveMediaUrl(String url) {
+    return url.startsWith('http') ? url : '$baseUrl$url';
+  }
 }
