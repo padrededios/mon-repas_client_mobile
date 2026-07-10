@@ -12,6 +12,52 @@ class AppTheme {
   static ThemeData get light => _build(AppColors.light, Brightness.light);
   static ThemeData get dark => _build(AppColors.dark, Brightness.dark);
 
+  /// Thème « BD » : le thème clair reconstruit sur la palette comic
+  /// (bordures noires), avec des contours épaissis façon cases de BD.
+  static ThemeData get comic {
+    const c = AppColors.comic;
+    final base = _build(c, Brightness.light);
+    final radius = BorderRadius.circular(cardRadius);
+    return base.copyWith(
+      appBarTheme: base.appBarTheme.copyWith(
+        shape: const Border(
+          bottom: BorderSide(color: Color(0xFF1C1917), width: 2),
+        ),
+        titleTextStyle: base.appBarTheme.titleTextStyle?.copyWith(
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+      cardTheme: base.cardTheme.copyWith(
+        shape: RoundedRectangleBorder(
+          borderRadius: radius,
+          side: const BorderSide(color: Color(0xFF1C1917), width: 2),
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: c.primary,
+          foregroundColor: c.primaryForeground,
+          elevation: 0,
+          minimumSize: const Size(64, 44),
+          shape: RoundedRectangleBorder(
+            borderRadius: radius,
+            side: const BorderSide(color: Color(0xFF1C1917), width: 2),
+          ),
+          textStyle: const TextStyle(fontWeight: FontWeight.w800),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: c.foreground,
+          side: const BorderSide(color: Color(0xFF1C1917), width: 2),
+          minimumSize: const Size(64, 44),
+          shape: RoundedRectangleBorder(borderRadius: radius),
+          textStyle: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+      ),
+    );
+  }
+
   static ThemeData _build(AppColors c, Brightness brightness) {
     final colorScheme = ColorScheme(
       brightness: brightness,

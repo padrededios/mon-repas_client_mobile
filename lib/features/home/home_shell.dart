@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_typography.dart';
@@ -115,8 +116,6 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   @override
   Widget build(BuildContext context) {
     final colors = context.appColors;
-    final user = ref.watch(authProvider.select((s) => s.user));
-    final themeMode = ref.watch(themeModeProvider);
     final index = ref.watch(homeTabIndexProvider);
 
     return Scaffold(
@@ -153,67 +152,10 @@ class _HomeShellState extends ConsumerState<HomeShell> {
               );
             },
           ),
-          PopupMenuButton<String>(
+          IconButton(
             icon: const Icon(Icons.account_circle_outlined),
             tooltip: 'Profil',
-            onSelected: (value) async {
-              switch (value) {
-                case 'theme-light':
-                  ref
-                      .read(themeModeProvider.notifier)
-                      .setMode(ThemeMode.light);
-                case 'theme-dark':
-                  ref.read(themeModeProvider.notifier).setMode(ThemeMode.dark);
-                case 'theme-system':
-                  ref
-                      .read(themeModeProvider.notifier)
-                      .setMode(ThemeMode.system);
-                case 'logout':
-                  await ref.read(authProvider.notifier).logout();
-              }
-            },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                enabled: false,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      user?.fullName ?? '',
-                      style: TextStyle(
-                        color: colors.foreground,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    Text(
-                      user?.email ?? '',
-                      style: TextStyle(
-                        color: colors.mutedForeground,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const PopupMenuDivider(),
-              _themeItem('theme-light', 'Thème clair', Icons.light_mode_outlined,
-                  themeMode == ThemeMode.light),
-              _themeItem('theme-dark', 'Thème sombre', Icons.dark_mode_outlined,
-                  themeMode == ThemeMode.dark),
-              _themeItem('theme-system', 'Thème système',
-                  Icons.brightness_auto_outlined, themeMode == ThemeMode.system),
-              const PopupMenuDivider(),
-              const PopupMenuItem(
-                value: 'logout',
-                child: Row(
-                  children: [
-                    Icon(Icons.logout, size: 20),
-                    SizedBox(width: 8),
-                    Text('Se déconnecter'),
-                  ],
-                ),
-              ),
-            ],
+            onPressed: () => context.push('/profile'),
           ),
           const SizedBox(width: 4),
         ],
@@ -269,23 +211,4 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     );
   }
 
-  PopupMenuItem<String> _themeItem(
-    String value,
-    String label,
-    IconData icon,
-    bool selected,
-  ) {
-    return PopupMenuItem(
-      value: value,
-      child: Row(
-        children: [
-          Icon(icon, size: 20),
-          const SizedBox(width: 8),
-          Expanded(child: Text(label)),
-          if (selected)
-            const Icon(Icons.check, size: 18, color: AppColors.brandOrange),
-        ],
-      ),
-    );
-  }
 }

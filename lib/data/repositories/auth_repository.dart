@@ -78,6 +78,22 @@ class AuthRepository {
     }
   }
 
+  /// `PATCH /users/me/password` — le mot de passe actuel est vérifié côté
+  /// API (401 « Mot de passe actuel incorrect » en cas d'erreur).
+  Future<String> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final data = await _api.patch('/users/me/password', data: {
+      'currentPassword': currentPassword,
+      'newPassword': newPassword,
+    });
+    if (data is Map<String, dynamic> && data['message'] is String) {
+      return data['message'] as String;
+    }
+    return 'Mot de passe mis à jour avec succès';
+  }
+
   Future<void> logout() async {
     try {
       await _api.post('/auth/logout');

@@ -70,6 +70,28 @@ class AppColors extends ThemeExtension<AppColors> {
     warning: Color(0xFFF97316),
   );
 
+  /// Thème « BD » : papier crème, contours noirs épais, couleurs franches
+  /// façon bande dessinée. Thème clair au sens Material.
+  static const comic = AppColors(
+    background: Color(0xFFFFF6E3),
+    foreground: Color(0xFF1C1917),
+    card: Color(0xFFFFFDF6),
+    popover: Color(0xFFFFFDF6),
+    primary: Color(0xFF1C1917),
+    primaryForeground: Color(0xFFFFF6E3),
+    secondary: Color(0xFFFFE8A3),
+    secondaryForeground: Color(0xFF1C1917),
+    muted: Color(0xFFF6E7C6),
+    mutedForeground: Color(0xFF6B5D4B),
+    destructive: Color(0xFFD62828),
+    destructiveForeground: Color(0xFFFFFFFF),
+    border: Color(0xFF1C1917),
+    input: Color(0xFF1C1917),
+    ring: brandOrange,
+    success: Color(0xFF1B9E4B),
+    warning: Color(0xFFE76F00),
+  );
+
   static const dark = AppColors(
     background: Color(0xFF181C25),
     foreground: Color(0xFFDCDFE5),
