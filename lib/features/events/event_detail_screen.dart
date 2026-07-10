@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart' show toBeginningOfSentenceCase;
 
+import '../../core/api/api_config.dart';
 import '../../core/api/api_exception.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/dates.dart';
@@ -103,7 +104,7 @@ class _EventDetailScreenState extends ConsumerState<EventDetailScreen> {
             children: [
               if (event.imageUrl != null)
                 Image.network(
-                  event.imageUrl!,
+                  ApiConfig.resolveMediaUrl(event.imageUrl!),
                   height: 200,
                   width: double.infinity,
                   fit: BoxFit.cover,

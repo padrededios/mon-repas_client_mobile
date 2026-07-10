@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart' show toBeginningOfSentenceCase;
 
+import '../../core/api/api_config.dart';
 import '../../core/api/api_exception.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/dates.dart';
@@ -92,7 +93,7 @@ class EventCard extends StatelessWidget {
           children: [
             if (event.imageUrl != null)
               Image.network(
-                event.imageUrl!,
+                ApiConfig.resolveMediaUrl(event.imageUrl!),
                 height: 140,
                 width: double.infinity,
                 fit: BoxFit.cover,
