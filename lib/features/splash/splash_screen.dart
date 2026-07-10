@@ -10,7 +10,7 @@ import '../../data/providers.dart';
 
 /// Splash animé : reprend l'animation du logo de la landing page —
 /// entrée avec rebond (logoEntrance) puis halo orange pulsant
-/// (logoGlowDrop) sur fond sombre à dégradé radial.
+/// (logoGlowDrop) sur fond clair, assorti au thème de l'app.
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -22,13 +22,14 @@ class SplashScreen extends ConsumerStatefulWidget {
 
 class _SplashScreenState extends ConsumerState<SplashScreen>
     with TickerProviderStateMixin {
-  static const _background = Color(0xFF0A0705);
+  static const _background = Color(0xFFF6F6FA);
 
-  /// Intro : 1 s d'entrée du logo (0 → 56 %) puis révélation du titre.
-  /// À la fin, le splash est marqué terminé et le router peut rediriger.
+  /// Intro : 1 s d'entrée du logo, révélation du titre, puis le halo
+  /// pulse encore ~1,5 s. À la fin, le splash est marqué terminé et le
+  /// router peut rediriger.
   late final AnimationController _intro = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 1800),
+    duration: const Duration(milliseconds: 3200),
   );
 
   /// Pulsation du halo : 3,5 s aller-retour, en boucle.
@@ -39,7 +40,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
   late final Animation<double> _logoPhase = CurvedAnimation(
     parent: _intro,
-    curve: const Interval(0, 0.56),
+    curve: const Interval(0, 0.32),
   );
 
   // Keyframes logoEntrance de la landing (globals.css) :
@@ -76,7 +77,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   /// Titre + indicateur : fondu montant après l'atterrissage du logo.
   late final Animation<double> _titleReveal = CurvedAnimation(
     parent: _intro,
-    curve: const Interval(0.5, 0.95, curve: Curves.easeOutCubic),
+    curve: const Interval(0.28, 0.55, curve: Curves.easeOutCubic),
   );
 
   @override
@@ -103,13 +104,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     return Scaffold(
       backgroundColor: _background,
       body: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle.light,
+        value: SystemUiOverlayStyle.dark,
         child: DecoratedBox(
           decoration: const BoxDecoration(
             gradient: RadialGradient(
               center: Alignment(0, -0.2),
               radius: 1.1,
-              colors: [Color(0xFF45260F), Color(0xFF1C120A), _background],
+              colors: [Colors.white, Color(0xFFF3F3F8), Color(0xFFEAEAF2)],
               stops: [0.0, 0.55, 1.0],
             ),
           ),
@@ -138,7 +139,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                                   gradient: RadialGradient(
                                     colors: [
                                       AppColors.brandOrange.withValues(
-                                        alpha: 0.28 + 0.30 * glow,
+                                        alpha: 0.20 + 0.22 * glow,
                                       ),
                                       AppColors.brandOrange.withValues(
                                         alpha: 0,
@@ -188,15 +189,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                       Text(
                         'Mon Repas',
                         style: AppTypography.brandTitleLarge
-                            .copyWith(color: Colors.white),
+                            .copyWith(color: const Color(0xFF1C1917)),
                       ),
                       const SizedBox(height: 28),
-                      const SizedBox(
+                      SizedBox(
                         width: 22,
                         height: 22,
                         child: CircularProgressIndicator(
                           strokeWidth: 2.5,
-                          color: Colors.white38,
+                          color: AppColors.brandOrange.withValues(alpha: 0.6),
                         ),
                       ),
                     ],

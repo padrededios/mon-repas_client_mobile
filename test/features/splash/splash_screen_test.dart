@@ -42,7 +42,7 @@ void main() {
     expect(logoOpacity(), lessThan(0.1));
 
     // Fin de l'intro : logo pleinement visible + titre révélé.
-    await tester.pump(const Duration(milliseconds: 1900));
+    await tester.pump(const Duration(milliseconds: 3300));
     expect(logoOpacity(), closeTo(1, 0.01));
     expect(find.text('Mon Repas'), findsOneWidget);
   });
@@ -56,7 +56,12 @@ void main() {
 
     expect(container.read(splashCompletedProvider), isFalse);
 
-    await tester.pump(const Duration(milliseconds: 1900));
+    // Toujours en cours à 2 s (l'intro dure ~3,2 s)…
+    await tester.pump(const Duration(milliseconds: 2000));
+    expect(container.read(splashCompletedProvider), isFalse);
+
+    // …terminé après.
+    await tester.pump(const Duration(milliseconds: 1300));
     expect(container.read(splashCompletedProvider), isTrue);
   });
 
@@ -83,7 +88,7 @@ void main() {
     expect(find.byType(SplashScreen), findsOneWidget);
 
     // Intro terminée → redirection vers la connexion.
-    await tester.pump(const Duration(milliseconds: 1900));
+    await tester.pump(const Duration(milliseconds: 3300));
     await tester.pump();
     expect(find.byType(LoginScreen), findsOneWidget);
   });
