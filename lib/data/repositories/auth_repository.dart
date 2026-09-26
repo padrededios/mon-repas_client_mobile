@@ -117,7 +117,8 @@ class AuthRepository {
   }
 
   /// `PATCH /users/me/password` — le mot de passe actuel est vérifié côté
-  /// API (400 « Mot de passe actuel incorrect » en cas d'erreur).
+  /// API (400 « Mot de passe actuel incorrect » en cas d'erreur). Les autres
+  /// sessions sont fermées ; cet appareil reçoit une nouvelle paire de jetons.
   Future<String> changePassword({
     required String currentPassword,
     required String newPassword,
@@ -126,10 +127,18 @@ class AuthRepository {
       'currentPassword': currentPassword,
       'newPassword': newPassword,
     });
-    if (data is Map<String, dynamic> && data['message'] is String) {
-      return data['message'] as String;
+    if (data is! Map<String, dynamic>) {
+      return 'Mot de passe mis à jour avec succès';
     }
-    return 'Mot de passe mis à jour avec succès';
+    // L'API ferme toutes les sessions et renvoie de nouveaux jetons pour cet
+    // appareil : sans eux, le prochain rafraîchissement déconnecterait l'app.
+    final token = data['access_token'];
+    final refreshToken = data['refresh_token'];
+    if (token is String && refreshToken is String) {
+      await _storage.saveTokens(token: token, refreshToken: refreshToken);
+      _api.auth.token = token;
+    }
+    return data['message'] as String? ?? 'Mot de passe mis à jour avec succès';
   }
 
   Future<void> logout() async {
@@ -137,7 +146,7 @@ class AuthRepository {
       // Révocation du refresh token côté API
       final refreshToken = await _storage.readRefreshToken();
       await _api.post('/auth/logout', data: {
-        if (refreshToken != null) 'refresh_token': refreshToken,
+        'refresh_token': ?refreshToken,
       });
     } on ApiException {
       // La purge locale suffit : l'access token expirera de lui-même.

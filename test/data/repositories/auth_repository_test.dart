@@ -177,6 +177,28 @@ void main() {
     });
   });
 
+  group('changePassword', () {
+    test('enregistre les nouveaux jetons (les autres sessions sont fermées)',
+        () async {
+      when(() => api.patch('/users/me/password', data: any(named: 'data')))
+          .thenAnswer((_) async => {
+                'message': 'Mot de passe mis à jour avec succès',
+                'access_token': 'jwt-new',
+                'refresh_token': 'rt-new',
+              });
+
+      final message = await repo.changePassword(
+        currentPassword: 'ancien-mdp',
+        newPassword: 'nouveau-mdp',
+      );
+
+      expect(message, 'Mot de passe mis à jour avec succès');
+      expect(interceptor.token, 'jwt-new');
+      verify(() => storage.saveTokens(token: 'jwt-new', refreshToken: 'rt-new'))
+          .called(1);
+    });
+  });
+
   group('logout', () {
     test('révoque le refresh token côté API puis purge', () async {
       when(() => api.post('/auth/logout', data: any(named: 'data')))
