@@ -351,11 +351,16 @@ class _DaySection extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                   ),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontWeight: isToday ? FontWeight.w700 : FontWeight.w600,
-                    color: isToday ? colors.foreground : colors.mutedForeground,
+                // Flexible : les libellés longs (« Mercredi 30 septembre »)
+                // passent à la ligne au lieu de déborder sur petit écran.
+                Flexible(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontWeight: isToday ? FontWeight.w700 : FontWeight.w600,
+                      color:
+                          isToday ? colors.foreground : colors.mutedForeground,
+                    ),
                   ),
                 ),
               ],
