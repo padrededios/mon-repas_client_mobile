@@ -7,6 +7,7 @@ import '../../core/theme/app_typography.dart';
 import '../../core/utils/validators.dart';
 import '../../data/providers.dart';
 import '../../shared/widgets/brand_logo.dart';
+import 'forgot_password_sheet.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -110,7 +111,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       onFieldSubmitted: (_) => _submit(),
                       validator: validatePassword,
                     ),
-                    const SizedBox(height: 24),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: isLoading
+                            ? null
+                            : () => ForgotPasswordSheet.show(
+                                  context,
+                                  initialEmail: _emailController.text.trim(),
+                                ),
+                        child: const Text('Mot de passe oublié ?'),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     ElevatedButton(
                       onPressed: isLoading ? null : _submit,
                       child: isLoading

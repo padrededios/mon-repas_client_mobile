@@ -26,11 +26,48 @@ class AuthRepository {
       );
     }
     final token = data['access_token'] as String;
+    final refreshToken = data['refresh_token'] as String?;
+    if (refreshToken != null) {
+      await _storage.saveTokens(token: token, refreshToken: refreshToken);
+    }
     await _persist(token, user);
     return user;
   }
 
-  /// `POST /auth/register` — pas de login auto : le compte attend
+  /// `POST /auth/refresh` — échange le refresh token stocké contre une
+  /// nouvelle paire (rotation). false si la session ne peut être prolongée.
+  Future<bool> refreshSession() async {
+    final refreshToken = await _storage.readRefreshToken();
+    if (refreshToken == null || refreshToken.isEmpty) return false;
+    try {
+      final data = await _api.post('/auth/refresh', data: {
+        'refresh_token': refreshToken,
+      }) as Map<String, dynamic>;
+      final token = data['access_token'] as String;
+      await _storage.saveTokens(
+        token: token,
+        refreshToken: data['refresh_token'] as String,
+      );
+      _api.auth.token = token;
+      return true;
+    } on ApiException {
+      return false;
+    }
+  }
+
+  /// `POST /auth/forgot-password` — la réponse est identique que le compte
+  /// existe ou non ; le lien reçu mène à la page web de réinitialisation.
+  Future<String> requestPasswordReset(String email) async {
+    final data = await _api.post('/auth/forgot-password', data: {
+      'email': email,
+    });
+    if (data is Map<String, dynamic> && data['message'] is String) {
+      return data['message'] as String;
+    }
+    return 'Si un compte actif correspond à cet email, un lien vient de lui être envoyé.';
+  }
+
+  /// `POST /users/register` — pas de login auto : le compte attend
   /// l'activation par un administrateur.
   Future<String> register({
     required String firstName,
@@ -38,7 +75,7 @@ class AuthRepository {
     required String email,
     required String password,
   }) async {
-    final data = await _api.post('/auth/register', data: {
+    final data = await _api.post('/users/register', data: {
       'firstName': firstName,
       'lastName': lastName,
       'email': email,
@@ -64,7 +101,8 @@ class AuthRepository {
         await _clearLocal();
         return null;
       }
-      await _persist(token, user);
+      // Le jeton a pu être renouvelé pendant l'appel (refresh sur 401).
+      await _persist(_api.auth.token ?? token, user);
       return user;
     } on ApiException catch (e) {
       if (e.isNetworkError) {
@@ -79,7 +117,7 @@ class AuthRepository {
   }
 
   /// `PATCH /users/me/password` — le mot de passe actuel est vérifié côté
-  /// API (401 « Mot de passe actuel incorrect » en cas d'erreur).
+  /// API (400 « Mot de passe actuel incorrect » en cas d'erreur).
   Future<String> changePassword({
     required String currentPassword,
     required String newPassword,
@@ -96,9 +134,13 @@ class AuthRepository {
 
   Future<void> logout() async {
     try {
-      await _api.post('/auth/logout');
+      // Révocation du refresh token côté API
+      final refreshToken = await _storage.readRefreshToken();
+      await _api.post('/auth/logout', data: {
+        if (refreshToken != null) 'refresh_token': refreshToken,
+      });
     } on ApiException {
-      // La purge locale suffit : le JWT expirera côté serveur.
+      // La purge locale suffit : l'access token expirera de lui-même.
     }
     await _clearLocal();
   }

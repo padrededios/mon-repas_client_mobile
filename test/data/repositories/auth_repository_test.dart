@@ -36,6 +36,11 @@ void main() {
           userJson: any(named: 'userJson'),
         )).thenAnswer((_) async {});
     when(() => storage.clear()).thenAnswer((_) async {});
+    when(() => storage.saveTokens(
+          token: any(named: 'token'),
+          refreshToken: any(named: 'refreshToken'),
+        )).thenAnswer((_) async {});
+    when(() => storage.readRefreshToken()).thenAnswer((_) async => 'rt-1');
     repo = AuthRepository(api, storage);
   });
 
@@ -55,6 +60,20 @@ void main() {
             token: 'jwt-123',
             userJson: any(named: 'userJson'),
           )).called(1);
+    });
+
+    test('stocke le refresh token renvoyé par l’API', () async {
+      when(() => api.post('/auth/login', data: any(named: 'data')))
+          .thenAnswer((_) async => {
+                'access_token': 'jwt-123',
+                'refresh_token': 'rt-123',
+                'user': clientJson,
+              });
+
+      await repo.login('client@mon-repas.com', 'password123');
+
+      verify(() => storage.saveTokens(token: 'jwt-123', refreshToken: 'rt-123'))
+          .called(1);
     });
 
     test('admin/restaurateur : refusé, rien n\'est persisté', () async {
@@ -127,9 +146,51 @@ void main() {
     });
   });
 
+  group('refreshSession', () {
+    test('échange le refresh token, stocke la nouvelle paire et branche le jeton',
+        () async {
+      when(() => api.post('/auth/refresh', data: {'refresh_token': 'rt-1'}))
+          .thenAnswer((_) async => {
+                'access_token': 'jwt-2',
+                'refresh_token': 'rt-2',
+              });
+
+      expect(await repo.refreshSession(), isTrue);
+      expect(interceptor.token, 'jwt-2');
+      verify(() => storage.saveTokens(token: 'jwt-2', refreshToken: 'rt-2'))
+          .called(1);
+    });
+
+    test('refus de l’API → false', () async {
+      when(() => api.post('/auth/refresh', data: any(named: 'data'))).thenThrow(
+        const ApiException(statusCode: 401, message: 'Session expirée'),
+      );
+
+      expect(await repo.refreshSession(), isFalse);
+    });
+
+    test('sans refresh token stocké → false sans appel réseau', () async {
+      when(() => storage.readRefreshToken()).thenAnswer((_) async => null);
+
+      expect(await repo.refreshSession(), isFalse);
+      verifyNever(() => api.post(any(), data: any(named: 'data')));
+    });
+  });
+
   group('logout', () {
+    test('révoque le refresh token côté API puis purge', () async {
+      when(() => api.post('/auth/logout', data: any(named: 'data')))
+          .thenAnswer((_) async => {'message': 'ok'});
+
+      await repo.logout();
+
+      verify(() => api.post('/auth/logout', data: {'refresh_token': 'rt-1'}))
+          .called(1);
+      verify(() => storage.clear()).called(1);
+    });
+
     test('purge locale même si l\'API échoue', () async {
-      when(() => api.post('/auth/logout')).thenThrow(
+      when(() => api.post('/auth/logout', data: any(named: 'data'))).thenThrow(
         const ApiException(statusCode: 0, message: 'Réseau indisponible'),
       );
       interceptor.token = 'jwt-123';
@@ -143,7 +204,7 @@ void main() {
 
   group('register', () {
     test('renvoie le message du backend, sans authentifier', () async {
-      when(() => api.post('/auth/register', data: any(named: 'data')))
+      when(() => api.post('/users/register', data: any(named: 'data')))
           .thenAnswer((_) async => {'message': 'Compte créé'});
 
       final message = await repo.register(

@@ -22,14 +22,18 @@ import 'repositories/time_slots_repository.dart';
 
 /// Tous les providers Riverpod de l'app, centralisés (pattern stepzy_mobile).
 
-// Types explicites : apiClientProvider et authProvider se référencent
-// mutuellement (handler 401), l'inférence seule serait circulaire.
+// Types explicites : apiClientProvider, authRepositoryProvider et
+// authProvider se référencent mutuellement (handler 401), l'inférence seule
+// serait circulaire.
 final Provider<ApiClient> apiClientProvider = Provider<ApiClient>((ref) {
   final client = ApiClient();
   // Session expirée (401) → purge locale + retour login via le redirect.
   client.onUnauthorized = () {
     ref.read(authProvider.notifier).forceLogout();
   };
+  // Access token expiré (401) → prolongation via le refresh token.
+  client.refreshSession =
+      () => ref.read(authRepositoryProvider).refreshSession();
   return client;
 });
 
@@ -37,7 +41,8 @@ final sessionStorageProvider = Provider<SessionStorage>((ref) {
   return SessionStorage();
 });
 
-final authRepositoryProvider = Provider<AuthRepository>((ref) {
+final Provider<AuthRepository> authRepositoryProvider =
+    Provider<AuthRepository>((ref) {
   return AuthRepository(
     ref.watch(apiClientProvider),
     ref.watch(sessionStorageProvider),

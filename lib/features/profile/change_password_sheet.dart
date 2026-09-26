@@ -54,9 +54,9 @@ class _ChangePasswordSheetState extends ConsumerState<ChangePasswordSheet> {
     } on ApiException catch (e) {
       setState(() {
         _submitting = false;
-        _apiError = e.statusCode == 401
-            ? 'Mot de passe actuel incorrect'
-            : e.message;
+        // L'API renvoie 400 « Mot de passe actuel incorrect » (et non 401,
+        // qui déconnecterait l'utilisateur).
+        _apiError = e.message;
       });
     }
   }

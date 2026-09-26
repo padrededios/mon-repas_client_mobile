@@ -7,6 +7,7 @@ class SessionStorage {
       : _storage = storage ?? const FlutterSecureStorage();
 
   static const _tokenKey = 'auth_token';
+  static const _refreshTokenKey = 'auth_refresh_token';
   static const _userKey = 'auth_user';
 
   final FlutterSecureStorage _storage;
@@ -19,12 +20,24 @@ class SessionStorage {
     await _storage.write(key: _userKey, value: userJson);
   }
 
+  /// Jetons renouvelés (connexion, rafraîchissement).
+  Future<void> saveTokens({
+    required String token,
+    required String refreshToken,
+  }) async {
+    await _storage.write(key: _tokenKey, value: token);
+    await _storage.write(key: _refreshTokenKey, value: refreshToken);
+  }
+
   Future<String?> readToken() => _storage.read(key: _tokenKey);
+
+  Future<String?> readRefreshToken() => _storage.read(key: _refreshTokenKey);
 
   Future<String?> readUserJson() => _storage.read(key: _userKey);
 
   Future<void> clear() async {
     await _storage.delete(key: _tokenKey);
+    await _storage.delete(key: _refreshTokenKey);
     await _storage.delete(key: _userKey);
   }
 }

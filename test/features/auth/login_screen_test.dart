@@ -126,4 +126,39 @@ void main() {
 
     expect(find.text('register-page'), findsOneWidget);
   });
+
+  group('mot de passe oublié', () {
+    testWidgets("reprend l'email saisi et confirme l'envoi de façon neutre",
+        (tester) async {
+      when(() => repo.requestPasswordReset(any()))
+          .thenAnswer((_) async => 'ok');
+      await tester.pumpWidget(buildApp());
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Email'),
+        'claire@mon-repas.com',
+      );
+
+      await tester.tap(find.text('Mot de passe oublié ?'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Recevoir le lien'));
+      await tester.pumpAndSettle();
+
+      verify(() => repo.requestPasswordReset('claire@mon-repas.com')).called(1);
+      expect(
+        find.textContaining('Si un compte actif correspond à claire@mon-repas.com'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('email invalide → pas d’appel API', (tester) async {
+      await tester.pumpWidget(buildApp());
+      await tester.tap(find.text('Mot de passe oublié ?'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Recevoir le lien'));
+      await tester.pumpAndSettle();
+
+      verifyNever(() => repo.requestPasswordReset(any()));
+    });
+  });
 }

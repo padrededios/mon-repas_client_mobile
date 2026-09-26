@@ -6,7 +6,9 @@ import 'auth_interceptor.dart';
 
 /// Wrapper Dio : JSON, timeout 10 s, Bearer token, erreurs → [ApiException].
 /// Les 4xx ne lèvent pas de DioException (validateStatus < 500) : ils sont
-/// convertis explicitement, et un 401 déclenche [onUnauthorized] (logout).
+/// convertis explicitement. Sur un 401, la session est d'abord rafraîchie
+/// ([refreshSession], une seule fois pour les requêtes simultanées) puis la
+/// requête rejouée ; si c'est impossible, [onUnauthorized] (logout).
 class ApiClient {
   ApiClient({Dio? dio, AuthInterceptor? authInterceptor})
       : dio = dio ??
@@ -29,26 +31,45 @@ class ApiClient {
   final Dio dio;
   final AuthInterceptor auth;
 
-  /// Appelé sur toute réponse 401 (session expirée) — branché par l'auth.
+  /// Appelé quand la session est irrécupérable (401 sans refresh possible).
   void Function()? onUnauthorized;
 
+  /// Rafraîchit les jetons (refresh token) ; true si [auth] porte un nouveau
+  /// jeton valide. Branché par l'auth.
+  Future<bool> Function()? refreshSession;
+
+  Future<bool>? _pendingRefresh;
+
+  /// Routes où un 401 signifie « identifiants refusés », pas « session expirée ».
+  static final _authRoute =
+      RegExp(r'^/auth/(login|refresh|forgot-password|reset-password)$');
+
   Future<dynamic> get(String path, {Map<String, dynamic>? query}) {
-    return _request(() => dio.get<dynamic>(path, queryParameters: query));
+    return _request(
+      path,
+      () => dio.get<dynamic>(path, queryParameters: query),
+    );
   }
 
   Future<dynamic> post(String path, {Object? data}) {
     return _request(
+      path,
       () => dio.post<dynamic>(path, data: data ?? const <String, dynamic>{}),
     );
   }
 
   Future<dynamic> patch(String path, {Object? data}) {
     return _request(
+      path,
       () => dio.patch<dynamic>(path, data: data ?? const <String, dynamic>{}),
     );
   }
 
-  Future<dynamic> _request(Future<Response<dynamic>> Function() send) async {
+  Future<dynamic> _request(
+    String path,
+    Future<Response<dynamic>> Function() send, {
+    bool isRetry = false,
+  }) async {
     Response<dynamic> response;
     try {
       response = await send();
@@ -64,10 +85,24 @@ class ApiClient {
       response = r;
     }
     final status = response.statusCode ?? 0;
+    if (status == 401 && !_authRoute.hasMatch(path)) {
+      // Le jeton est relu par l'intercepteur : rejouer suffit.
+      if (!isRetry && await _refreshOnce()) {
+        return _request(path, send, isRetry: true);
+      }
+      onUnauthorized?.call();
+    }
     if (status >= 400) {
-      if (status == 401) onUnauthorized?.call();
       throw ApiException.fromBody(status, response.data);
     }
     return response.data;
+  }
+
+  Future<bool> _refreshOnce() {
+    final refresh = refreshSession;
+    if (refresh == null) return Future.value(false);
+    return _pendingRefresh ??= refresh()
+        .catchError((Object _) => false)
+        .whenComplete(() => _pendingRefresh = null);
   }
 }

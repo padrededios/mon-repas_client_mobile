@@ -7,24 +7,47 @@ import '../api/api_config.dart';
 class SocketService {
   io.Socket? _socket;
 
+  /// Refus consécutifs du jeton par le serveur avant d'abandonner.
+  static const maxAuthRetries = 3;
+
   bool get isConnected => _socket?.connected ?? false;
 
+  /// [token] est relu à chaque (re)connexion : après un rafraîchissement de
+  /// session, le socket présente le jeton courant et non l'expiré. Quand le
+  /// serveur refuse le jeton il coupe la connexion : [refreshSession] est
+  /// alors appelé avant de se reconnecter.
   void connect({
-    required String token,
+    required String? Function() token,
     required void Function(String event, dynamic data) onEvent,
+    Future<bool> Function()? refreshSession,
   }) {
     disconnect();
     final socket = io.io(
       ApiConfig.wsUrl,
       io.OptionBuilder()
           .setTransports(['websocket', 'polling'])
-          .setAuth({'token': token})
           .enableReconnection()
           .setReconnectionDelay(1000)
           .setReconnectionDelayMax(5000)
           .disableAutoConnect()
           .build(),
     );
+    // Fonction d'auth : appelée par socket_io_client à chaque connexion.
+    socket.auth = (void Function(dynamic) send) => send({'token': token()});
+
+    var authRetries = 0;
+    socket.on('connected', (_) => authRetries = 0);
+    socket.on('disconnect', (reason) async {
+      if (reason != 'io server disconnect' ||
+          refreshSession == null ||
+          authRetries >= maxAuthRetries) {
+        return;
+      }
+      authRetries++;
+      final refreshed = await refreshSession();
+      if (refreshed && identical(_socket, socket)) socket.connect();
+    });
+
     socket.onAny((event, data) => onEvent(event, data));
     socket.connect();
     _socket = socket;

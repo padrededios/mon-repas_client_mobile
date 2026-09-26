@@ -57,9 +57,14 @@ class _HomeShellState extends ConsumerState<HomeShell> {
   }
 
   void _startRealtime() {
-    final token = ref.read(apiClientProvider).auth.token;
+    final api = ref.read(apiClientProvider);
+    final token = api.auth.token;
     if (token == null || token.isEmpty) return;
-    _socket.connect(token: token, onEvent: _handleRealtimeEvent);
+    _socket.connect(
+      token: () => api.auth.token,
+      onEvent: _handleRealtimeEvent,
+      refreshSession: () => ref.read(authRepositoryProvider).refreshSession(),
+    );
   }
 
   void _handleRealtimeEvent(String event, dynamic data) {

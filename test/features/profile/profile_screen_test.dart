@@ -162,9 +162,10 @@ void main() {
   testWidgets('mot de passe actuel incorrect : erreur affichée dans la feuille',
       (tester) async {
     await pumpProfile(tester);
+    // Réponse réelle de l'API : 400 (un 401 déconnecterait l'utilisateur)
     fakeRepository.nextError = const ApiException(
-      statusCode: 401,
-      message: 'Unauthorized',
+      statusCode: 400,
+      message: 'Mot de passe actuel incorrect',
     );
 
     await tester.tap(find.text('Changer mon mot de passe'));
